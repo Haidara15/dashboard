@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Accueil - INSEE{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/insee.css' %}?v=1">
+
+    <div class="button-row" id="first-row">
+        <div class="button-container">
+            <button class="button" onclick="toggleDropdown('dropdown1', 'first-row', 'second-row')">Statistiques</button>
+            <div id="dropdown1" class="dropdown">
+                <a href="#">Générales</a>
+                <a href="#">Économiques</a>
+                <a href="#">Détaillées</a>
+            </div>
+        </div>
+        <div class="button-container">
+            <button class="button" onclick="toggleDropdown('dropdown2', 'first-row', 'second-row')">Économie</button>
+            <div id="dropdown2" class="dropdown">
+                <a href="#">Croissance</a>
+                <a href="#">Emploi</a>
+                <a href="#">Marchés</a>
+            </div>
+        </div>
+        <div class="button-container">
+            <button class="button" onclick="toggleDropdown('dropdown3', 'first-row', 'second-row')">Finance</button>
+            <div id="dropdown3" class="dropdown">
+                <a href="#">Banques</a>
+                <a href="#">Investissements</a>
+                <a href="#">Crédits</a>
+            </div>
+        </div>
+    </div>
+    <div class="button-row" id="second-row">
+        <div class="button-container">
+            <button class="button" onclick="toggleDropdown('dropdown4', 'second-row', 'third-row')">Industrie</button>
+            <div id="dropdown4" class="dropdown">
+                <a href="#">Production</a>
+                <a href="#">Exportation</a>
+                <a href="#">Innovation</a>
+            </div>
+        </div>
+        <div class="button-container">
+            <button class="button" onclick="toggleDropdown('dropdown5', 'second-row', 'third-row')">Démographie</button>
+            <div id="dropdown5" class="dropdown">
+                <a href="#">Population</a>
+                <a href="#">Naissances</a>
+                <a href="#">Mortalité</a>
+            </div>
+        </div>
+        <div class="button-container">
+            <button class="button" onclick="toggleDropdown('dropdown6', 'second-row', 'third-row')">Environnement</button>
+            <div id="dropdown6" class="dropdown">
+                <a href="#">Énergie</a>
+                <a href="#">Pollution</a>
+                <a href="#">Climat</a>
+            </div>
+        </div>
+    </div>
+
+
+<script src="{% static 'js/insee.js' %}?v=1"></script>
+
+{% endblock %}

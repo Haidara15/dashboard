@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-inner"> <!-- WRAPPER qui aligne tout -->
+            <div class="navbar-left">
+                <div class="navbar-logo">MonDashboard</div>
+                <ul class="navbar-links" id="nav-links">
+                    <li><a href="{% url 'home' %}">Accueil</a></li>
+                    <li><a href="#">Analyse</a></li>
+                </ul>
+            </div>
+            <div class="navbar-toggle" onclick="toggleMenu()">☰</div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+    
+
+    <script>
+        function toggleMenu() {
+            const nav = document.getElementById("nav-links");
+            nav.classList.toggle("active");
+        }
+    </script>
+
+</body>
+
+</html>
