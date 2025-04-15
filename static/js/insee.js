@@ -1,20 +1,23 @@
-function toggleDropdown(dropdownId, currentRowId, nextRowId) {
-    var dropdown = document.getElementById(dropdownId);
-    var currentRow = document.getElementById(currentRowId);
-    var nextRow = document.getElementById(nextRowId);
-    var isDropdownVisible = dropdown.style.display === "block";
+function toggleDropdown(dropdownId, button) {
+    const dropdown = document.getElementById(dropdownId);
+    const isOpen = dropdown.classList.contains('open');
 
-    // Ferme tous les dropdowns
-    document.querySelectorAll('.dropdown').forEach(el => el.style.display = "none");
+    // Ferme tous les dropdowns et enlève "active" des boutons
+    document.querySelectorAll('.dropdown').forEach(el => el.classList.remove('open'));
+    document.querySelectorAll('.button').forEach(btn => btn.classList.remove('active'));
 
-    if (!isDropdownVisible) {
-        dropdown.style.display = "block";
-        var dropdownHeight = dropdown.offsetHeight;
-        nextRow.style.marginTop = dropdownHeight + "px";
-        window.scrollBy(0, dropdownHeight);
-    } else {
-        dropdown.style.display = "none";
-        nextRow.style.marginTop = "0px";
-        window.scrollBy(0, -dropdown.offsetHeight);
+    if (!isOpen) {
+        dropdown.classList.add('open');
+        button.classList.add('active');
     }
 }
+
+// Fermer dropdowns si clic en dehors
+document.addEventListener('click', function (e) {
+    const isButton = e.target.closest('.button');
+    const isDropdown = e.target.closest('.dropdown');
+    if (!isButton && !isDropdown) {
+        document.querySelectorAll('.dropdown').forEach(el => el.classList.remove('open'));
+        document.querySelectorAll('.button').forEach(btn => btn.classList.remove('active'));
+    }
+});

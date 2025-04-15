@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ sous_thematique.nom }} - Détail{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/insee.css' %}">
+
+<div class="container">
+    <h2>{{ sous_thematique.nom }}</h2>
+    <p><strong>Thématique :</strong> {{ sous_thematique.thematique.nom }}</p>
+
+    <div class="graph-placeholder">
+        <p>Graphique pour : <strong>{{ sous_thematique.slug }}</strong></p>
+    </div>
+
+    <a href="{% url 'home' %}">← Retour à l'accueil</a>
+</div>
+{% endblock %}

@@ -1,53 +1,78 @@
-
-
-.button-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-    width: 100%;
-    justify-content: center;
-    transition: margin-top 0.3s ease;
-}
-.button-container {
-    flex: 1;
-    position: relative;
+/* Container grid responsive */
+.grid-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    gap: 20px;
+    margin: 20px;
 }
-.button {
-    background-color: #0077c8;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    width: 100%;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-    text-align: center;
-    display: block;
+
+/* Ligne contenant 3 colonnes (ou moins en mobile) */
+.grid-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
 }
-.button:hover {
-    background-color: #005fa3;
-}
-.dropdown {
-    display: none;
-    background-color: white;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
-    padding: 10px;
-    width: 100%;
-    margin-top: 5px;
+
+/* Bouton et container */
+.button-container {
+    display: flex;
+    flex-direction: column;
     position: relative;
-    z-index: 10;
 }
+
+.button {
+    padding: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Chevron ▼ */
+.chevron {
+    transition: transform 0.3s ease;
+}
+
+.button.active .chevron {
+    transform: rotate(180deg); /* ▲ */
+}
+
+/* Dropdown animation */
+.dropdown {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.4s ease, opacity 0.4s ease;
+    background: #f9f9f9;
+    border: 1px solid #ccc;
+    margin-top: 5px;
+    width: 100%;
+}
+
+.dropdown.open {
+    max-height: 300px;
+    opacity: 1;
+}
+
 .dropdown a {
     display: block;
-    padding: 8px;
+    padding: 8px 12px;
     text-decoration: none;
     color: #333;
 }
+
 .dropdown a:hover {
-    background-color: #f0f0f0;
+    background-color: #eee;
+}
+
+/* Mobile : tout en colonne */
+@media screen and (max-width: 768px) {
+    .grid-row {
+        grid-template-columns: 1fr;
+    }
 }
