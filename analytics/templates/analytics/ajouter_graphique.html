@@ -1,109 +1,124 @@
+
 {% extends "base.html" %}
+
+{% load static %}
+
 {% block title %}Ajouter un graphique{% endblock %}
 
 {% block content %}
-<h2>Ajouter un graphique à {{ sous_thematique.nom }}</h2>
+<link rel="stylesheet" href="{% static 'css/insee.css' %}">
+<!-- 💡 Wrapper en 2 colonnes -->
+<div class="graph-builder">
+    <!-- 📋 Formulaire (sidebar) -->
+    <div class="sidebar">
+        <h2>Ajouter un graphique à {{ sous_thematique.nom }}</h2>
 
-<form method="post" onsubmit="prepareSeriesData(event)">
-    {% csrf_token %}
-    {{ graph_form.as_p }}
+        <form method="post" onsubmit="prepareSeriesData(event)">
+            {% csrf_token %}
+            {{ graph_form.as_p }}
 
-    <!-- Champ global pour les catégories -->
-    <label><strong>Catégories (communes à toutes les séries) :</strong></label>
-    <input type="text" id="categories-global" placeholder="Ex: Trimestre 1, Trimestre 2, Trimestre 3" required>
-    <br><br>
+            <label><strong>Titre abscisses :</strong></label>
+            <input type="text" id="titre-x" placeholder="Ex: Mois"><br>
 
-    <h3>Séries de données</h3>
-    <div id="series-container"></div>
+            <label><strong>Titre ordonnées :</strong></label>
+            <input type="text" id="titre-y" placeholder="Ex: Valeurs"><br><br>
 
-    <button type="button" id="add-serie-btn" onclick="addSerie()">➕ Ajouter une série</button>
-    <input type="hidden" name="series_data" id="series-data-json">
-    <br><br>
+            <label><strong>Catégories :</strong></label>
+            <input type="text" id="categories-global" placeholder="Ex: Janvier, Février, Mars" required><br><br>
 
-    <button type="submit">✅ Enregistrer</button>
-</form>
+            <h3>Séries de données</h3>
+            <div id="series-container"></div>
 
-<!-- Template de série à cloner -->
-<template id="serie-template">
-    <div class="serie-block" style="border:1px solid #ccc;padding:10px;margin:10px 0;">
-        <label>Nom :</label>
-        <input type="text" class="serie-nom" required><br>
+            <button type="button" id="add-serie-btn" onclick="addSerie()">➕ Ajouter une série</button>
+            <input type="hidden" name="series_data" id="series-data-json">
+            <br><br>
 
-        <label>Valeurs (séparées par virgule) :</label>
-        <input type="text" class="serie-valeurs" required><br>
+            <button type="submit">✅ Enregistrer</button>
+        </form>
 
-        <button type="button" onclick="this.parentElement.remove()">❌ Supprimer cette série</button>
+        <!-- Template de série à cloner -->
+        <template id="serie-template">
+            <div class="serie-block" style="border:1px solid #ccc;padding:10px;margin:10px 0;">
+                <label>Nom :</label>
+                <input type="text" class="serie-nom"><br>
+                <label>Valeurs :</label>
+                <input type="text" class="serie-valeurs"><br>
+                <button type="button" onclick="this.parentElement.remove()">❌ Supprimer</button>
+            </div>
+        </template>
     </div>
-</template>
 
+    <!-- 📊 Aperçu du graphique -->
+    <div class="main-panel">
+        <h3 id="preview-title">Aperçu du graphique</h3>
+        <canvas id="preview-chart"></canvas>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- JS principal -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const typeField = document.getElementById("id_type");
-        const addSerieBtn = document.getElementById("add-serie-btn");
+document.addEventListener("DOMContentLoaded", function () {
+    const typeField = document.getElementById("id_type");
+    const addSerieBtn = document.getElementById("add-serie-btn");
 
-        // Fonction pour cacher/afficher le bouton selon le type de graphique
-        function updateSerieButtonVisibility() {
-            const currentType = typeField.value;
-            const seriesCount = document.querySelectorAll('.serie-block').length;
+    function updateSerieButtonVisibility() {
+        const currentType = typeField.value;
+        const seriesCount = document.querySelectorAll('.serie-block').length;
+        addSerieBtn.style.display = (currentType === "pie" && seriesCount >= 1) ? "none" : "inline-block";
+    }
 
-            if (currentType === "pie" && seriesCount >= 1) {
-                addSerieBtn.style.display = "none";
-            } else {
-                addSerieBtn.style.display = "inline-block";
-            }
-        }
+    typeField.addEventListener("change", updateSerieButtonVisibility);
 
-        // Sur changement du type
-        typeField.addEventListener("change", updateSerieButtonVisibility);
-
-        // Fonction appelée depuis le bouton
-        window.addSerie = function () {
-            const template = document.getElementById('serie-template');
-            const clone = template.content.cloneNode(true);
-            document.getElementById('series-container').appendChild(clone);
-            updateSerieButtonVisibility();
-        };
-
-        // Sur suppression d’une série
-        document.addEventListener("click", function (e) {
-            if (e.target && e.target.matches("button")) {
-                if (e.target.textContent.includes("❌")) {
-                    e.target.parentElement.remove();
-                    updateSerieButtonVisibility();
-                }
-            }
-        });
-
-        // Initialisation au chargement
+    window.addSerie = function () {
+        const template = document.getElementById('serie-template');
+        const clone = template.content.cloneNode(true);
+        document.getElementById('series-container').appendChild(clone);
         updateSerieButtonVisibility();
+    };
+
+    document.addEventListener("click", function (e) {
+        if (e.target && e.target.matches("button") && e.target.textContent.includes("❌")) {
+            e.target.parentElement.remove();
+            updateSerieButtonVisibility();
+        }
     });
 
-    function prepareSeriesData(e) {
-        e.preventDefault();
+    updateSerieButtonVisibility();
+});
 
-        const categoriesInput = document.getElementById("categories-global").value.trim();
-        const categories = categoriesInput.split(',').map(c => c.trim()).filter(c => c.length > 0);
+function prepareSeriesData(e) {
+    e.preventDefault();
 
-        const series = [];
-        document.querySelectorAll('.serie-block').forEach(block => {
-            const nom = block.querySelector('.serie-nom').value.trim();
-            const valeurs = block.querySelector('.serie-valeurs').value
-                .split(',').map(v => parseFloat(v.trim()));
+    const categoriesInput = document.getElementById("categories-global").value.trim();
+    const categories = categoriesInput.split(',').map(c => c.trim()).filter(c => c.length > 0);
 
-            if (nom && valeurs.length === categories.length) {
-                series.push({ nom: nom, categories: categories, valeurs: valeurs });
-            }
-        });
+    const series = [];
+    document.querySelectorAll('.serie-block').forEach(block => {
+        const nom = block.querySelector('.serie-nom').value.trim();
+        const valeurs = block.querySelector('.serie-valeurs').value
+            .split(',').map(v => parseFloat(v.trim()));
 
-        if (series.length === 0) {
-            alert("Veuillez ajouter au moins une série de données.");
-            return;
+        if (nom && valeurs.length === categories.length) {
+            series.push({ nom: nom, categories: categories, valeurs: valeurs });
         }
+    });
 
-        document.getElementById("series-data-json").value = JSON.stringify(series);
-        e.target.submit();
+    if (series.length === 0) {
+        alert("Veuillez ajouter au moins une série de données.");
+        return;
     }
+
+    document.getElementById("series-data-json").value = JSON.stringify(series);
+    e.target.submit();
+}
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="{% static 'js/graph_preview.js' %}"></script>
 
 
 {% endblock %}

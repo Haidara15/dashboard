@@ -78,3 +78,26 @@
         grid-template-columns: 1fr;
     }
 }
+
+
+/**** Structure la page en deux partie ***/
+
+.graph-builder {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.sidebar {
+    flex: 1;
+    max-width: 400px;
+}
+
+.main-panel {
+    flex: 2;
+    padding: 20px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
