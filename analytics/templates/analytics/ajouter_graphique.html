@@ -13,6 +13,16 @@
     <div class="sidebar">
         <h2>Ajouter un graphique à {{ sous_thematique.nom }}</h2>
 
+        <div id="chart-warning" class="alert-box" style="display: none;">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-content">
+                <strong>Error</strong><br>
+                Le type "camembert" n'accepte qu'une seule série. Les séries supplémentaires ont été supprimées.
+            </div>
+            <span class="alert-close" onclick="this.parentElement.style.display='none'">✖</span>
+        </div>
+        
+
         <form method="post" onsubmit="prepareSeriesData(event)">
             {% csrf_token %}
             {{ graph_form.as_p }}
@@ -27,6 +37,7 @@
             <input type="text" id="categories-global" placeholder="Ex: Janvier, Février, Mars" required><br><br>
 
             <h3>Séries de données</h3>
+
             <div id="series-container"></div>
 
             <button type="button" id="add-serie-btn" onclick="addSerie()">➕ Ajouter une série</button>

@@ -101,3 +101,41 @@
     border-radius: 8px;
 }
 
+
+/** Pour le message d'avertissement lorsqu'un camembert ne peut pas prendre plus d'une séries de données **/
+
+.alert-box {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 12px;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.alert-icon {
+    font-size: 24px;
+    margin-right: 12px;
+}
+
+.alert-content {
+    flex-grow: 1;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+.alert-close {
+    font-size: 20px;
+    cursor: pointer;
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    color: #721c24;
+}
+
+
+

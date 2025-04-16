@@ -70,4 +70,31 @@ document.addEventListener("click", function (e) {
     }
 });
 
-document.addEventListener("DOMContentLoaded", updateChartPreview);
+document.addEventListener("DOMContentLoaded", function () {
+    const typeField = document.getElementById("id_type");
+
+    typeField.addEventListener("change", function () {
+        const warningDiv = document.getElementById("chart-warning");
+
+        if (typeField.value === "pie") {
+            const allSeries = document.querySelectorAll('.serie-block');
+            if (allSeries.length > 1) {
+                allSeries.forEach((block, index) => {
+                    if (index > 0) block.remove();
+                });
+
+                // Affichage d'un message non bloquant
+                const warningDiv = document.getElementById("chart-warning");
+                if (warningDiv) {
+                    warningDiv.style.display = "flex";
+                }
+
+                
+            }
+        }
+
+        updateChartPreview();
+    });
+
+    updateChartPreview();
+});
