@@ -2,7 +2,7 @@
 .grid-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 30px;
     margin: 20px;
 }
 
@@ -10,7 +10,7 @@
 .grid-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+    gap: 30px;
 }
 
 /* Bouton et container */
@@ -21,7 +21,7 @@
 }
 
 .button {
-    padding: 10px;
+    padding: 20px;
     font-weight: bold;
     cursor: pointer;
     width: 100%;
@@ -31,6 +31,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    border-radius:5px;
 }
 
 /* Chevron ▼ */
@@ -52,6 +53,7 @@
     border: 1px solid #ccc;
     margin-top: 5px;
     width: 100%;
+    border-radius:5px;
 }
 
 .dropdown.open {

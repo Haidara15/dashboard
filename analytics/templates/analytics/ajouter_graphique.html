@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Ajouter un graphique{% endblock %}
+
+{% block content %}
+<h2>Ajouter un graphique à {{ sous_thematique.nom }}</h2>
+
+<form method="post" onsubmit="prepareSeriesData(event)">
+    {% csrf_token %}
+    {{ graph_form.as_p }}
+
+    <!-- Champ global pour les catégories -->
+    <label><strong>Catégories (communes à toutes les séries) :</strong></label>
+    <input type="text" id="categories-global" placeholder="Ex: Trimestre 1, Trimestre 2, Trimestre 3" required>
+    <br><br>
+
+    <h3>Séries de données</h3>
+    <div id="series-container"></div>
+
+    <button type="button" id="add-serie-btn" onclick="addSerie()">➕ Ajouter une série</button>
+    <input type="hidden" name="series_data" id="series-data-json">
+    <br><br>
+
+    <button type="submit">✅ Enregistrer</button>
+</form>
+
+<!-- Template de série à cloner -->
+<template id="serie-template">
+    <div class="serie-block" style="border:1px solid #ccc;padding:10px;margin:10px 0;">
+        <label>Nom :</label>
+        <input type="text" class="serie-nom" required><br>
+
+        <label>Valeurs (séparées par virgule) :</label>
+        <input type="text" class="serie-valeurs" required><br>
+
+        <button type="button" onclick="this.parentElement.remove()">❌ Supprimer cette série</button>
+    </div>
+</template>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const typeField = document.getElementById("id_type");
+        const addSerieBtn = document.getElementById("add-serie-btn");
+
+        // Fonction pour cacher/afficher le bouton selon le type de graphique
+        function updateSerieButtonVisibility() {
+            const currentType = typeField.value;
+            const seriesCount = document.querySelectorAll('.serie-block').length;
+
+            if (currentType === "pie" && seriesCount >= 1) {
+                addSerieBtn.style.display = "none";
+            } else {
+                addSerieBtn.style.display = "inline-block";
+            }
+        }
+
+        // Sur changement du type
+        typeField.addEventListener("change", updateSerieButtonVisibility);
+
+        // Fonction appelée depuis le bouton
+        window.addSerie = function () {
+            const template = document.getElementById('serie-template');
+            const clone = template.content.cloneNode(true);
+            document.getElementById('series-container').appendChild(clone);
+            updateSerieButtonVisibility();
+        };
+
+        // Sur suppression d’une série
+        document.addEventListener("click", function (e) {
+            if (e.target && e.target.matches("button")) {
+                if (e.target.textContent.includes("❌")) {
+                    e.target.parentElement.remove();
+                    updateSerieButtonVisibility();
+                }
+            }
+        });
+
+        // Initialisation au chargement
+        updateSerieButtonVisibility();
+    });
+
+    function prepareSeriesData(e) {
+        e.preventDefault();
+
+        const categoriesInput = document.getElementById("categories-global").value.trim();
+        const categories = categoriesInput.split(',').map(c => c.trim()).filter(c => c.length > 0);
+
+        const series = [];
+        document.querySelectorAll('.serie-block').forEach(block => {
+            const nom = block.querySelector('.serie-nom').value.trim();
+            const valeurs = block.querySelector('.serie-valeurs').value
+                .split(',').map(v => parseFloat(v.trim()));
+
+            if (nom && valeurs.length === categories.length) {
+                series.push({ nom: nom, categories: categories, valeurs: valeurs });
+            }
+        });
+
+        if (series.length === 0) {
+            alert("Veuillez ajouter au moins une série de données.");
+            return;
+        }
+
+        document.getElementById("series-data-json").value = JSON.stringify(series);
+        e.target.submit();
+    }
+</script>
+
+
+{% endblock %}

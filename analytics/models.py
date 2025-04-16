@@ -30,3 +30,31 @@ class SousThematique(models.Model):
         if not self.slug:
             self.slug = slugify(self.nom)
         super().save(*args, **kwargs)
+
+
+from django.db import models
+from django.utils.text import slugify
+
+class Graphique(models.Model):
+    sous_thematique = models.ForeignKey("SousThematique", on_delete=models.CASCADE, related_name="graphiques")
+    titre = models.CharField(max_length=200)
+    type = models.CharField(max_length=50, choices=[
+        ('bar', 'Colonnes'),
+        ('line', 'Lignes'),
+        ('pie', 'Camembert'),
+    ])
+    description = models.TextField(blank=True, null=True)
+    date_ajout = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.titre
+
+class SerieDonnee(models.Model):
+    graphique = models.ForeignKey(Graphique, on_delete=models.CASCADE, related_name="series")
+    nom = models.CharField(max_length=100)
+    categories = models.JSONField()  # exemple : ["Janvier", "Février"]
+    valeurs = models.JSONField()     # exemple : [100, 200]
+
+    def __str__(self):
+        return f"{self.nom} ({self.graphique.titre})"
+

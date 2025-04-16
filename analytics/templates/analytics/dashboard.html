@@ -1,18 +1,71 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}{{ sous_thematique.nom }} - Détail{% endblock %}
+{% block title %}{{ sous_thematique.nom }} - Dashboard{% endblock %}
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/insee.css' %}">
+
+<!-- Chargement de Chart.js (si pas déjà dans base.html) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="container">
     <h2>{{ sous_thematique.nom }}</h2>
     <p><strong>Thématique :</strong> {{ sous_thematique.thematique.nom }}</p>
 
-    <div class="graph-placeholder">
-        <p>Graphique pour : <strong>{{ sous_thematique.slug }}</strong></p>
+    <!-- ✅ Bouton ajouter graphique -->
+    <div style="margin-top: 20px;">
+        <a href="{% url 'ajouter_graphique' slug=sous_thematique.slug %}" class="btn btn-primary">
+            ➕ Ajouter un graphique
+        </a>
     </div>
 
-    <a href="{% url 'home' %}">← Retour à l'accueil</a>
+    <!-- Graphiques existants -->
+    <div class="graph-placeholder">
+        {% for graph in graphiques %}
+            <div class="graph-block" style="margin-top: 40px;">
+                <h3>{{ graph.titre }} ({{ graph.get_type_display }})</h3>
+                <p>{{ graph.description }}</p>
+                <canvas id="chart{{ graph.id }}"></canvas>
+
+                <div style="margin-top: 10px;">
+                    <a href="#">✏️ Modifier</a> |
+                    <a href="#">🗑️ Supprimer</a>
+                </div>
+
+                <script>
+                    const ctx{{ graph.id }} = document.getElementById('chart{{ graph.id }}').getContext('2d');
+
+                    const chart{{ graph.id }} = new Chart(ctx{{ graph.id }}, {
+                        type: '{{ graph.type }}',
+                        data: {
+                            {% if graph.series.all|length > 0 %}
+                                labels: {{ graph.series.all.0.categories|safe }},
+                            {% else %}
+                                labels: [],
+                            {% endif %}
+                            datasets: [
+                                {% for serie in graph.series.all %}
+                                    {
+                                        label: "{{ serie.nom }}",
+                                        data: {{ serie.valeurs|safe }},
+                                    },
+                                {% endfor %}
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                </script>
+            </div>
+        {% empty %}
+            <p style="margin-top: 30px;">Aucun graphique pour cette sous-thématique.</p>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}
