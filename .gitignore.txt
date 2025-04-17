@@ -1,0 +1,38 @@
+# === FICHIERS PYTHON ===
+__pycache__/
+*.py[cod]
+
+# === ENVIRONNEMENT VIRTUEL ===
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# === FICHIERS DE CONFIGURATION SECRETS ===
+*.env
+.env.*
+
+# === OUTILS/IDEs ===
+.vscode/
+.idea/
+*.swp
+
+# === FICHIERS TEMPORAIRES / SYSTÈME ===
+.DS_Store
+Thumbs.db
+
+# === FICHIERS LOG / CACHE ===
+*.log
+*.pot
+*.pyc
+.cache/
+coverage/
+
+# === FICHIERS DE BUILD ===
+dist/
+build/
+*.egg-info/
+
+# === STATIC GÉNÉRÉS (optionnel si tu compiles toi-même) ===
+staticfiles/

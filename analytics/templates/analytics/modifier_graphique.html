@@ -1,43 +1,40 @@
 {% extends "base.html" %}
 {% load static %}
-
-{% block title %}Ajouter un graphique{% endblock %}
+{% block title %}Modifier un graphique{% endblock %}
 
 {% block content %}
-<!-- Mode JS : ADD -->
-<div id="mode" data-mode="add" hidden></div>
+<!-- Mode JS : EDIT -->
+<div id="mode" data-mode="edit" hidden></div>
 <link rel="stylesheet" href="{% static 'css/insee.css' %}">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- 💡 Wrapper en 2 colonnes -->
 <div class="graph-builder">
-    <!-- 📋 Formulaire (sidebar) -->
+    <!-- 📋 Formulaire -->
     <div class="sidebar">
-        <h4>Ajouter un graphique à {{ sous_thematique.nom }}</h4>
+        <h4>Modifier le graphique : {{ graphique.titre }}</h4>
 
-        <!-- Message d'avertissement -->
+        <!-- Alerte camembert -->
         <div id="chart-warning" class="alert-box" style="display: none;">
             <span class="alert-icon">⚠️</span>
             <div class="alert-content">
-                <strong>Error</strong><br>
+                <strong>Attention :</strong><br>
                 Le type "camembert" n'accepte qu'une seule série. Les séries supplémentaires ont été supprimées.
             </div>
             <span class="alert-close" onclick="this.parentElement.style.display='none'">✖</span>
         </div>
 
-        <!-- Formulaire -->
         <form method="post" onsubmit="prepareSeriesData(event)">
             {% csrf_token %}
             {{ graph_form.as_p }}
 
             <label><strong>Titre abscisses :</strong></label>
-            <input type="text" id="titre-x" value="Trimestre"><br>
+            <input type="text" id="titre-x" value="{{ graphique.titre_abscisse }}"><br>
 
             <label><strong>Titre ordonnées :</strong></label>
-            <input type="text" id="titre-y" value="Valeurs"><br><br>
+            <input type="text" id="titre-y" value="{{ graphique.titre_ordonnée }}"><br><br>
 
             <label><strong>Catégories :</strong></label>
-            <input type="text" id="categories-global" value="T1, T2, T3, T4" required><br><br>
+            <input type="text" id="categories-global" value="{{ series.0.categories|join:', ' }}" required><br><br>
 
             <h3>Séries de données</h3>
             <div id="series-container"></div>
@@ -46,18 +43,18 @@
             <input type="hidden" name="series_data" id="series-data-json">
             <br><br>
 
-            <button type="submit">✅ Enregistrer</button>
+            <button type="submit">💾 Enregistrer les modifications</button>
         </form>
     </div>
 
-    <!-- 📊 Aperçu du graphique -->
+    <!-- 📊 Aperçu -->
     <div class="main-panel">
         <h3 id="preview-title">Aperçu du graphique</h3>
         <canvas id="preview-chart"></canvas>
     </div>
 </div>
 
-<!-- ✅ Template de série à cloner (hors de .sidebar pour éviter le décalage) -->
+<!-- Template JS à cloner -->
 <template id="serie-template">
     <div class="serie-block" style="border:1px solid #ccc;padding:10px;margin:10px 0;">
         <label>Nom :</label>
@@ -73,13 +70,33 @@
     </div>
 </template>
 
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- JS principal -->
-
+<!-- JS preview + injection des séries -->
 <script src="{% static 'js/graph_preview.js' %}"></script>
 <script src="{% static 'js/prepare_series.js' %}"></script>
 
+<script>
+    // ⚡ Injecte dynamiquement les séries du graphique (passées via le contexte)
+    document.addEventListener("DOMContentLoaded", function () {
+        const seriesData = [
+            {% for serie in series %}
+                {
+                    nom: "{{ serie.nom|escapejs }}",
+                    valeurs: {{ serie.valeurs|safe }},
+                    couleur: "{{ serie.couleur }}",
+                },
+            {% endfor %}
+        ];
 
+        // Crée dynamiquement les champs avec les valeurs existantes
+        for (const serie of seriesData) {
+            addSerie();
+            const block = document.querySelectorAll('.serie-block')[document.querySelectorAll('.serie-block').length - 1];
+            block.querySelector('.serie-nom').value = serie.nom;
+            block.querySelector('.serie-valeurs').value = serie.valeurs.join(", ");
+            block.querySelector('.serie-couleur').value = serie.couleur;
+        }
+
+        updateChartPreview();
+    });
+</script>
 {% endblock %}

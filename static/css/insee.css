@@ -90,7 +90,9 @@
 
 .sidebar {
     flex: 1;
-    max-width: 400px;
+    max-width: 300px;
+    border:1px solid #ccc;
+    padding:30px;
 }
 
 .main-panel {
@@ -112,22 +114,17 @@
     padding: 15px 20px;
     display: flex;
     align-items: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
     margin-bottom: 20px;
 }
-
 .alert-icon {
     font-size: 24px;
     margin-right: 12px;
 }
-
 .alert-content {
     flex-grow: 1;
-    font-family: Arial, sans-serif;
     font-size: 14px;
 }
-
 .alert-close {
     font-size: 20px;
     cursor: pointer;
@@ -136,6 +133,23 @@
     top: 10px;
     color: #721c24;
 }
+.graph-builder {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+}
+.sidebar {
+    flex: 1;
+    max-width: 400px;
+}
+.main-panel {
+    flex: 2;
+    padding: 20px;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+
 
 
 
