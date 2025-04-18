@@ -54,7 +54,6 @@ class SerieDonnee(models.Model):
     categories = models.JSONField()
     valeurs = models.JSONField()
     couleur = models.CharField(max_length=7, default="#3e95cd")  # ✅ nouvelle colonne
-    couleurs_camembert = models.JSONField(blank=True,null=True,help_text="Palette de couleurs utilisée uniquement pour les graphiques camemberts")
 
 
     def __str__(self):

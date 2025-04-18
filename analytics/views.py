@@ -32,57 +32,69 @@ from .forms import GraphiqueForm
 import json
 
 
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Graphique, SerieDonnee, SousThematique
+from .forms import GraphiqueForm
+import json
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Graphique, SerieDonnee, SousThematique
+from .forms import GraphiqueForm
+import json
+
 def ajouter_graphique(request, slug):
     # 🔎 Récupère la sous-thématique via le slug (ou 404 si introuvable)
     sous_thematique = get_object_or_404(SousThematique, slug=slug)
 
     if request.method == 'POST':
-        # 🧾 Formulaire rempli
+        # 🧾 Récupère le formulaire rempli
         graph_form = GraphiqueForm(request.POST)
 
-        # 📦 Récupère les séries sous forme de JSON
+        # 🧠 Récupère les séries depuis le champ caché "series_data" (JSON)
         raw_series_data = request.POST.get('series_data', '[]')
 
+        print("📨 CHAMP series_data BRUT:", raw_series_data)
+
         try:
+            # ✅ Sécurise le chargement JSON (évite les erreurs si vide)
             series_data = json.loads(raw_series_data) if raw_series_data.strip() else []
         except json.JSONDecodeError:
             series_data = []
 
-        # ✅ Enregistrement du graphique
+        # ✅ Vérifie que le formulaire du graphique est valide
         if graph_form.is_valid():
+            # 📌 Enregistre l'objet sans commit pour ajouter la sous-thématique
             graphique = graph_form.save(commit=False)
             graphique.sous_thematique = sous_thematique
             graphique.save()
 
-            # 🔁 Enregistrement des séries
+            # 🔁 Enregistre chaque série liée au graphique
             for serie in series_data:
                 SerieDonnee.objects.create(
                     graphique=graphique,
                     nom=serie['nom'],
                     categories=serie['categories'],
                     valeurs=serie['valeurs'],
-                    couleur=serie.get('couleur', '#3e95cd'),
-                    couleurs_camembert=serie.get('couleurs', None),
+                    couleur=serie.get('couleur', '#3e95cd')  # ✅ ici on récupère la bonne couleur
                 )
 
-            # 🔁 Redirection post-enregistrement
+            # ✅ Redirige vers le dashboard de la sous-thématique après enregistrement
             return redirect('dashboard', slug=sous_thematique.slug)
 
     else:
-        # 🆕 Formulaire vide avec valeurs par défaut
+        # 📄 Si GET : affiche un formulaire vide avec valeurs initiales si souhaité
         graph_form = GraphiqueForm(initial={
             'titre': 'Évolution trimestrielle',
             'type': 'bar',
-            'description': 'Comparaison des indicateurs par trimestre',
-            'titre_abscisse': 'Trimestres',
-            'titre_ordonnée': 'Valeurs'
+            'description': 'Comparaison des indicateurs par trimestre'
         })
 
-    # 📤 Rendu du template
+    # 📤 Affiche le template avec le formulaire et la sous-thématique
     return render(request, 'analytics/ajouter_graphique.html', {
         'graph_form': graph_form,
         'sous_thematique': sous_thematique,
     })
+
 
 
 
@@ -118,6 +130,7 @@ def modifier_graphique(request, graph_id):
 
             # 🔁 Supprimer anciennes séries + ajouter les nouvelles
             graphique.series.all().delete()
+            
             for serie in series_data:
                 SerieDonnee.objects.create(
                     graphique=graphique,
@@ -125,7 +138,6 @@ def modifier_graphique(request, graph_id):
                     categories=serie['categories'],
                     valeurs=serie['valeurs'],
                     couleur=serie.get('couleur', '#3e95cd'),
-                    couleurs_camembert=serie.get('couleurs', None),
                 )
 
             return redirect('dashboard', slug=sous_thematique.slug)

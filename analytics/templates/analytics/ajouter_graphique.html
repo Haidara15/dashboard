@@ -7,7 +7,6 @@
 <!-- Mode JS : ADD -->
 <div id="mode" data-mode="add" hidden></div>
 <link rel="stylesheet" href="{% static 'css/insee.css' %}">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- 💡 Wrapper en 2 colonnes -->
 <div class="graph-builder">
@@ -73,13 +72,9 @@
     </div>
 </template>
 
-
+<!-- ✅ Scripts chargés à la fin (important !) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- JS principal -->
-
 <script src="{% static 'js/graph_preview.js' %}"></script>
 <script src="{% static 'js/prepare_series.js' %}"></script>
-
 
 {% endblock %}

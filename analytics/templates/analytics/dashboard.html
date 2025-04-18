@@ -5,25 +5,28 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/insee.css' %}">
 <link rel="stylesheet" href="{% static 'css/modal_delete_chart.css' %}">
+
+<!-- Chargement de Chart.js (si pas déjà dans base.html) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="container">
     <h2>{{ sous_thematique.nom }}</h2>
     <p><strong>Thématique :</strong> {{ sous_thematique.thematique.nom }}</p>
 
+    <!-- ✅ Bouton ajouter graphique -->
     <div style="margin-top: 20px;">
         <a href="{% url 'ajouter_graphique' slug=sous_thematique.slug %}" class="btn btn-primary">
             ➕ Ajouter un graphique
         </a>
     </div>
 
+    <!-- Graphiques existants -->
     <div class="graph-placeholder">
         {% for graph in graphiques %}
             <div class="graph-block" style="margin-top: 40px;">
                 <h3>{{ graph.titre }} ({{ graph.get_type_display }})</h3>
                 <p>{{ graph.description }}</p>
-
-                <canvas id="chart{{ graph.id }}" height="120"></canvas>
+                <canvas id="chart{{ graph.id }}"></canvas>
 
                 <div style="margin-top: 10px;">
                     <a href="{% url 'modifier_graphique' graph.id %}">✏️ Modifier</a> |
@@ -32,48 +35,36 @@
 
                 <script>
                     const ctx{{ graph.id }} = document.getElementById('chart{{ graph.id }}').getContext('2d');
+
                     const chart{{ graph.id }} = new Chart(ctx{{ graph.id }}, {
                         type: '{{ graph.type }}',
                         data: {
-                            labels: {% if graph.series.all|length > 0 %}{{ graph.series.first.categories|safe }}{% else %}[] {% endif %},
+                            {% if graph.series.all|length > 0 %}
+                                labels: {{ graph.series.all.0.categories|safe }},
+                            {% else %}
+                                labels: [],
+                            {% endif %}
+
                             datasets: [
                                 {% for serie in graph.series.all %}
                                     {
                                         label: "{{ serie.nom }}",
                                         data: {{ serie.valeurs|safe }},
-                                        {% if graph.type == "pie" and serie.couleurs_camembert %}
-                                            backgroundColor: {{ serie.couleurs_camembert|safe }},
-                                        {% else %}
-                                            backgroundColor: "{{ serie.couleur|default:'#3e95cd' }}",
-                                        {% endif %}
+                                        backgroundColor: "{{ serie.couleur|default_if_none:'#3e95cd' }}",
                                         borderColor: "#333",
                                         borderWidth: 1
                                     },
                                 {% endfor %}
                             ]
+                            
                         },
                         options: {
                             responsive: true,
                             plugins: {
-                                legend: { position: 'bottom' },
-                                title: { display: true, text: "{{ graph.titre }}" }
-                            },
-                            {% if graph.type != 'pie' %}
-                            scales: {
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: "{{ graph.titre_abscisse|default:'' }}"
-                                    }
-                                },
-                                y: {
-                                    title: {
-                                        display: true,
-                                        text: "{{ graph.titre_ordonnée|default:'' }}"
-                                    }
+                                legend: {
+                                    position: 'bottom'
                                 }
                             }
-                            {% endif %}
                         }
                     });
                 </script>
@@ -87,16 +78,18 @@
 <!-- 🔥 Modal de suppression -->
 <div id="delete-modal" class="modal">
     <div class="modal-content">
-        <span class="close" onclick="closeDeleteModal()">×</span>
-        <h3>🗑️ Supprimer le graphique</h3>
-        <p id="modal-text"></p>
-        <form id="delete-form" method="post" style="margin-top: 15px;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">✅ Oui, supprimer</button>
-            <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">❌ Annuler</button>
-        </form>
+      <span class="close" onclick="closeDeleteModal()">×</span>
+      <h3>🗑️ Supprimer le graphique</h3>
+      <p id="modal-text"></p>
+      <form id="delete-form" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">✅ Oui, supprimer</button>
+        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">❌ Annuler</button>
+      </form>
     </div>
-</div>
+  </div>
+  
 
 <script src="{% static 'js/modal_delete_chart.js' %}"></script>
+
 {% endblock %}
