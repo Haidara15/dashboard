@@ -26,12 +26,12 @@ function prepareSeriesData(e) {
                 nom: nom,
                 categories: categories,
                 valeurs: valeurs,
-                couleur: couleur, // ✅ toujours stockée
+                couleur: couleur, // pour bar / line
             };
 
-            // ✅ Pour pie, on garde une palette issue de cette couleur
+            // 🎨 Si camembert, on génère plusieurs couleurs
             if (chartType === "pie") {
-                serie.couleurs = valeurs.map(() => couleur);
+                serie.couleurs_camembert = getPieColors(valeurs.length);
             }
 
             series.push(serie);
@@ -48,9 +48,18 @@ function prepareSeriesData(e) {
     e.target.submit();
 }
 
-
-// 🎨 Palette utilisée si camembert
+// 🎨 Palette de base pour camemberts
 const PIE_COLORS = [
     "#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9",
-    "#c45850", "#f39c12", "#2ecc71", "#e74c3c", "#3498db", "#9b59b6"
+    "#c45850", "#f39c12", "#2ecc71", "#e74c3c",
+    "#3498db", "#9b59b6"
 ];
+
+// 🔁 Génére une palette adaptée à la taille des données
+function getPieColors(count) {
+    const colors = [];
+    while (colors.length < count) {
+        colors.push(...PIE_COLORS);
+    }
+    return colors.slice(0, count);
+}

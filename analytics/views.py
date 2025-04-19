@@ -70,12 +70,15 @@ def ajouter_graphique(request, slug):
 
             # 🔁 Enregistre chaque série liée au graphique
             for serie in series_data:
+                print("🔍 Données série reçue :", serie)
                 SerieDonnee.objects.create(
                     graphique=graphique,
                     nom=serie['nom'],
                     categories=serie['categories'],
                     valeurs=serie['valeurs'],
-                    couleur=serie.get('couleur', '#3e95cd')  # ✅ ici on récupère la bonne couleur
+                    couleur=serie.get('couleur', '#3e95cd'),  # ✅ ici on récupère la bonne couleur
+                    couleurs_camembert = serie.get('couleurs_camembert') 
+
                 )
 
             # ✅ Redirige vers le dashboard de la sous-thématique après enregistrement
@@ -138,6 +141,8 @@ def modifier_graphique(request, graph_id):
                     categories=serie['categories'],
                     valeurs=serie['valeurs'],
                     couleur=serie.get('couleur', '#3e95cd'),
+                    couleurs_camembert = serie.get('couleurs_camembert') 
+
                 )
 
             return redirect('dashboard', slug=sous_thematique.slug)

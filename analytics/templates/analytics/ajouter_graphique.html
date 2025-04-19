@@ -30,10 +30,10 @@
             {{ graph_form.as_p }}
 
             <label><strong>Titre abscisses :</strong></label>
-            <input type="text" id="titre-x" value="Trimestre"><br>
+            <input type="text" id="titre-x" value="Titre des abscisses"><br>
 
             <label><strong>Titre ordonnées :</strong></label>
-            <input type="text" id="titre-y" value="Valeurs"><br><br>
+            <input type="text" id="titre-y" value="Titre des ordonnées"><br><br>
 
             <label><strong>Catégories :</strong></label>
             <input type="text" id="categories-global" value="T1, T2, T3, T4" required><br><br>
@@ -60,21 +60,23 @@
 <template id="serie-template">
     <div class="serie-block" style="border:1px solid #ccc;padding:10px;margin:10px 0;">
         <label>Nom :</label>
-        <input type="text" class="serie-nom"><br>
+        <input type="text" class="serie-nom" value="Nom de la série"><br>
 
         <label>Valeurs :</label>
-        <input type="text" class="serie-valeurs"><br>
+        <input type="text" class="serie-valeurs" value="10,20,40,50" required><br>
 
         <label>Couleur :</label>
         <input type="color" class="serie-couleur" value="#3e95cd"><br>
 
-        <button type="button" onclick="this.parentElement.remove()">❌ Supprimer</button>
+        <button type="button" onclick="this.parentElement.remove()">❌</button>
     </div>
 </template>
 
 <!-- ✅ Scripts chargés à la fin (important !) -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/chart_utils.js' %}"></script>
 <script src="{% static 'js/graph_preview.js' %}"></script>
 <script src="{% static 'js/prepare_series.js' %}"></script>
+
 
 {% endblock %}

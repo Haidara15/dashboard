@@ -46,16 +46,23 @@
                             {% endif %}
 
                             datasets: [
-                                {% for serie in graph.series.all %}
-                                    {
-                                        label: "{{ serie.nom }}",
-                                        data: {{ serie.valeurs|safe }},
-                                        backgroundColor: "{{ serie.couleur|default_if_none:'#3e95cd' }}",
-                                        borderColor: "#333",
-                                        borderWidth: 1
-                                    },
-                                {% endfor %}
-                            ]
+    {% for serie in graph.series.all %}
+        {
+            label: "{{ serie.nom }}",
+            data: {{ serie.valeurs|safe }},
+            backgroundColor: {% if graph.type == "pie" %}
+                {{ serie.couleurs_camembert|default:'[]'|safe }}
+            {% else %}
+                "{{ serie.couleur|default:'#3e95cd' }}"
+            {% endif %},
+            borderColor: {% if graph.type == "pie" %} [] {% else %} "#333" {% endif %},
+            borderWidth: 1
+        },
+    {% endfor %}
+]
+
+
+                            
                             
                         },
                         options: {

@@ -53,8 +53,8 @@ class SerieDonnee(models.Model):
     nom = models.CharField(max_length=100)
     categories = models.JSONField()
     valeurs = models.JSONField()
-    couleur = models.CharField(max_length=7, default="#3e95cd")  # ✅ nouvelle colonne
-
+    couleur = models.CharField(max_length=7, default="#3e95cd")  # pour bar/line
+    couleurs_camembert = models.JSONField(null=True, blank=True)  # 🎯 pour pie
 
     def __str__(self):
         return f"{self.nom} ({self.graphique.titre})"

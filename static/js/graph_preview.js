@@ -1,5 +1,19 @@
-
 let chartInstance = null;
+
+// 🎨 Palette pour camemberts
+const PIE_COLORS = [
+    "#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9",
+    "#c45850", "#f39c12", "#2ecc71", "#e74c3c",
+    "#3498db", "#9b59b6"
+];
+
+function getPieColors(count) {
+    const colors = [];
+    while (colors.length < count) {
+        colors.push(...PIE_COLORS);
+    }
+    return colors.slice(0, count);
+}
 
 function updateChartPreview() {
     const chartType = document.getElementById("id_type").value;
@@ -18,6 +32,7 @@ function updateChartPreview() {
     const categories = document.getElementById("categories-global").value
         .split(',').map(c => c.trim()).filter(c => c.length > 0);
 
+    const series = [];
     const datasets = [];
 
     document.querySelectorAll('.serie-block').forEach((block) => {
@@ -27,13 +42,30 @@ function updateChartPreview() {
         const couleur = block.querySelector('.serie-couleur')?.value || "#3e95cd";
 
         if (nom && valeurs.length === categories.length) {
+            // ✅ Couleurs multiples si camembert
+            const couleursCamembert = chartType === "pie" ? getPieColors(valeurs.length) : null;
+
             datasets.push({
                 label: nom,
                 data: valeurs,
-                backgroundColor: couleur,
-                borderColor: "#333",
+                backgroundColor: chartType === "pie" ? couleursCamembert : couleur,
+                borderColor: chartType === "pie" ? [] : "#333",
                 borderWidth: 1
             });
+
+            // ✅ Ajout pour enregistrement
+            const serie = {
+                nom: nom,
+                categories: categories,
+                valeurs: valeurs,
+                couleur: couleur
+            };
+
+            if (chartType === "pie") {
+                serie.couleurs_camembert = couleursCamembert;
+            }
+
+            series.push(serie);
         }
     });
 
@@ -58,6 +90,9 @@ function updateChartPreview() {
             } : {}
         }
     });
+
+    // ✅ Injecte les données encodées dans le champ caché pour soumission
+    document.getElementById("series-data-json").value = JSON.stringify(series);
 }
 
 window.addSerie = function () {
