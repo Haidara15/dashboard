@@ -42,7 +42,6 @@ function updateChartPreview() {
         const couleur = block.querySelector('.serie-couleur')?.value || "#3e95cd";
 
         if (nom && valeurs.length === categories.length) {
-            // ✅ Couleurs multiples si camembert
             const couleursCamembert = chartType === "pie" ? getPieColors(valeurs.length) : null;
 
             datasets.push({
@@ -53,7 +52,6 @@ function updateChartPreview() {
                 borderWidth: 1
             });
 
-            // ✅ Ajout pour enregistrement
             const serie = {
                 nom: nom,
                 categories: categories,
@@ -91,8 +89,25 @@ function updateChartPreview() {
         }
     });
 
-    // ✅ Injecte les données encodées dans le champ caché pour soumission
     document.getElementById("series-data-json").value = JSON.stringify(series);
+
+    // ✅ Mise à jour de l’état du bouton Ajouter série
+    toggleAddSerieButton();
+}
+
+// ✅ Gère l'affichage du bouton Ajouter une série
+function toggleAddSerieButton() {
+    const chartType = document.getElementById("id_type").value;
+    const serieBlocks = document.querySelectorAll('.serie-block');
+    const addBtn = document.getElementById("add-serie-btn");
+
+    if (!addBtn) return;
+
+    if (chartType === "pie" && serieBlocks.length >= 1) {
+        addBtn.style.display = "none";
+    } else {
+        addBtn.style.display = "inline-block";
+    }
 }
 
 window.addSerie = function () {
