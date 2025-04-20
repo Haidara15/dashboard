@@ -13,71 +13,66 @@
     <h2>{{ sous_thematique.nom }}</h2>
     <p><strong>Thématique :</strong> {{ sous_thematique.thematique.nom }}</p>
 
-    <!-- ✅ Bouton ajouter graphique -->
+    <!-- ✅ Boutons action -->
     <div style="margin-top: 20px;">
-        <a href="{% url 'ajouter_graphique' slug=sous_thematique.slug %}" class="btn btn-primary">
-            ➕ Ajouter un graphique
+        <a href="{% url 'importer_excel' slug=sous_thematique.slug %}" class="btn btn-secondary">
+          📂 Importer depuis Excel
         </a>
     </div>
 
     <!-- Graphiques existants -->
     <div class="graph-placeholder">
         {% for graph in graphiques %}
-            <div class="graph-block" style="margin-top: 40px;">
-                <h3>{{ graph.titre }} ({{ graph.get_type_display }})</h3>
-                <p>{{ graph.description }}</p>
-                <canvas id="chart{{ graph.id }}"></canvas>
+        <div class="graph-block" style="margin-top: 40px;">
+            <h3>{{ graph.titre }} ({{ graph.get_type_display }})</h3>
+            <p>{{ graph.description }}</p>
+            <canvas id="chart{{ graph.id }}"></canvas>
 
-                <div style="margin-top: 10px;">
-                    <a href="{% url 'modifier_graphique' graph.id %}">✏️ Modifier</a> |
-                    <a href="#" onclick="openDeleteModal({{ graph.id }}, '{{ graph.titre }}')">🗑️ Supprimer</a>
-                </div>
+            <div style="margin-top: 10px;">
+                <a href="{% url 'modifier_graphique_excel' graph.id %}">✏️ Modifier</a>|
+                <a href="#" onclick="openDeleteModal({{ graph.id }}, '{{ graph.titre }}')">🗑️ Supprimer</a>
+            </div>
 
-                <script>
-                    const ctx{{ graph.id }} = document.getElementById('chart{{ graph.id }}').getContext('2d');
+            <script>
+                const ctx{{ graph.id }} = document.getElementById('chart{{ graph.id }}').getContext('2d');
 
-                    const chart{{ graph.id }} = new Chart(ctx{{ graph.id }}, {
-                        type: '{{ graph.type }}',
-                        data: {
-                            {% if graph.series.all|length > 0 %}
-                                labels: {{ graph.series.all.0.categories|safe }},
-                            {% else %}
-                                labels: [],
-                            {% endif %}
-
-                            datasets: [
-    {% for serie in graph.series.all %}
-        {
-            label: "{{ serie.nom }}",
-            data: {{ serie.valeurs|safe }},
-            backgroundColor: {% if graph.type == "pie" %}
-                {{ serie.couleurs_camembert|default:'[]'|safe }}
-            {% else %}
-                "{{ serie.couleur|default:'#3e95cd' }}"
-            {% endif %},
-            borderColor: {% if graph.type == "pie" %} [] {% else %} "#333" {% endif %},
-            borderWidth: 1
-        },
-    {% endfor %}
-]
-
-
-                            
-                            
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
-                                }
+                const chart{{ graph.id }} = new Chart(ctx{{ graph.id }}, {
+                    type: '{{ graph.type }}',
+                    data: {
+                        {% if graph.series.all|length > 0 %}
+                        labels: {{ graph.series.all.0.categories|safe }},
+                        {% else %}
+                        labels: [],
+                        {% endif %}
+                        datasets: [
+                            {% for serie in graph.series.all %}
+                            {
+                                label: "{{ serie.nom }}",
+                                data: {{ serie.valeurs|safe }},
+                                backgroundColor: {% if graph.type == "pie" %}
+                                    {{ serie.couleurs_camembert|default:'[]'|safe }}
+                                {% else %}
+                                    "{{ serie.couleur|default:'#3e95cd' }}"
+                                {% endif %},
+                                borderColor: {% if graph.type == "pie" %} [] {% else %} "#333" {% endif %},
+                                borderWidth: 1
+                            },
+                            {% endfor %}
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
                             }
                         }
-                    });
-                </script>
-            </div>
+                    }
+                });
+            </script>
+        </div>
         {% empty %}
-            <p style="margin-top: 30px;">Aucun graphique pour cette sous-thématique.</p>
+        <p style="margin-top: 30px;">Aucun graphique pour cette sous-thématique.</p>
         {% endfor %}
     </div>
 </div>
@@ -85,17 +80,16 @@
 <!-- 🔥 Modal de suppression -->
 <div id="delete-modal" class="modal">
     <div class="modal-content">
-      <span class="close" onclick="closeDeleteModal()">×</span>
-      <h3>🗑️ Supprimer le graphique</h3>
-      <p id="modal-text"></p>
-      <form id="delete-form" method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">✅ Oui, supprimer</button>
-        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">❌ Annuler</button>
-      </form>
+        <span class="close" onclick="closeDeleteModal()">×</span>
+        <h3>🗑️ Supprimer le graphique</h3>
+        <p id="modal-text"></p>
+        <form id="delete-form" method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">✅ Oui, supprimer</button>
+            <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">❌ Annuler</button>
+        </form>
     </div>
-  </div>
-  
+</div>
 
 <script src="{% static 'js/modal_delete_chart.js' %}"></script>
 

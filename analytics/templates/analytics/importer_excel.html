@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- 🌈 CSS personnalisé -->
+<link rel="stylesheet" href="{% static 'css/importer_excel.css' %}">
+
+<div class="excel-container">
+
+  <!-- 🧭 Barre latérale (formulaire) -->
+  <div class="excel-sidebar">
+    <h2>📂 Importer Excel</h2>
+
+    <!-- 📁 Formulaire pour charger le fichier -->
+    <form id="excel-upload-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="file" name="excel_file" id="excel-file" accept=".xlsx" required>
+    </form>
+
+    <!-- 🧾 Formulaire principal -->
+    <form method="post" action="{% url 'creer_graphique_excel' slug=slug %}">
+      {% csrf_token %}
+
+      <!-- 🔢 Colonnes dynamiques -->
+      <div id="colonnes-container"></div>
+
+      <label for="id_titre">Titre :</label>
+      <input type="text" name="titre" id="id_titre" required>
+
+      <label for="id_type">Type de graphique :</label>
+      <select name="type" id="id_type">
+        <option value="bar" selected>Barres</option>
+        <option value="line">Lignes</option>
+        <option value="pie">Camembert</option>
+      </select>
+
+      <label for="id_description">Description :</label>
+      <textarea name="description" id="id_description" rows="3"></textarea>
+
+      <label for="titre-x">Titre axe X :</label>
+      <input type="text" name="titre-x" id="titre-x">
+
+      <label for="titre-y">Titre axe Y :</label>
+      <input type="text" name="titre-y" id="titre-y">
+
+      <!-- Champ caché pour envoyer les données encodées -->
+      <input type="hidden" name="series_data" id="series-data-json">
+
+      <button type="submit" class="submit-btn">✅ Enregistrer le graphique</button>
+    </form>
+  </div>
+
+  <!-- 🖼️ Zone d'aperçu du graphique -->
+  <div class="excel-main">
+    <canvas id="preview-chart"></canvas>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- ✅ Script JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  let excelColumns = [];
+  let selectedX = null;
+  let selectedY = [];
+
+  // 📁 Upload fichier Excel
+  document.getElementById('excel-file').addEventListener('change', function () {
+    const form = document.getElementById('excel-upload-form');
+    const formData = new FormData(form);
+
+    fetch("", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "success") {
+        excelColumns = data.columns;
+        renderColumnCheckboxes();
+      } else {
+        alert("Erreur: " + data.message);
+      }
+    });
+  });
+
+  // 🧩 Affiche les colonnes détectées
+  function renderColumnCheckboxes() {
+    const container = document.getElementById("colonnes-container");
+    container.innerHTML = `
+      <h4>Colonne pour les catégories :</h4>
+      ${excelColumns.map(col => `
+        <label>
+          <input type="radio" name="categorie" value="${col}" onchange="updateSelection()"> ${col}
+        </label><br>
+      `).join('')}
+
+      <h4>Colonnes pour les séries :</h4>
+      ${excelColumns.map(col => `
+        <label>
+          <input type="checkbox" class="serie-checkbox" value="${col}"> ${col}
+        </label><br>
+      `).join('')}
+
+      <p id="pie-warning" style="display:none; color: #888; font-style: italic;">
+        Pour un camembert, une seule série est autorisée.
+      </p>
+    `;
+
+    applyPieBehavior();
+    updateSelection();
+  }
+
+  // 🔁 Gestion Pie Chart
+  function applyPieBehavior() {
+    const type = document.getElementById("id_type").value;
+    const checkboxes = document.querySelectorAll('.serie-checkbox');
+    const warning = document.getElementById("pie-warning");
+
+    if (type === "pie") {
+      warning.style.display = "block";
+      const checked = Array.from(checkboxes).filter(cb => cb.checked);
+      if (checked.length > 1) {
+        checked.forEach((cb, index) => {
+          cb.checked = index === checked.length - 1;
+        });
+      }
+      checkboxes.forEach(cb => {
+        cb.onclick = function () {
+          if (this.checked) {
+            checkboxes.forEach(other => {
+              if (other !== this) other.checked = false;
+            });
+          }
+          updateSelection();
+        };
+      });
+    } else {
+      warning.style.display = "none";
+      checkboxes.forEach(cb => {
+        cb.onclick = () => updateSelection();
+      });
+    }
+  }
+
+  // 🔁 Update preview & données
+  function updateSelection() {
+    selectedX = document.querySelector('input[name="categorie"]:checked')?.value;
+    selectedY = Array.from(document.querySelectorAll('.serie-checkbox:checked')).map(cb => cb.value);
+    if (selectedX && selectedY.length > 0) genererPreview();
+  }
+
+  // 🎨 Génère l'aperçu via API
+  function genererPreview() {
+    fetch("/api/generer-graphique-preview/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: JSON.stringify({
+        categorie: selectedX,
+        series: selectedY
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (window.previewChart) window.previewChart.destroy();
+
+      window.previewChart = new Chart(document.getElementById("preview-chart"), {
+        type: document.getElementById("id_type").value,
+        data: {
+          labels: data.labels,
+          datasets: data.datasets
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "bottom" },
+            title: { display: true, text: document.getElementById("id_titre").value || "Aperçu" }
+          },
+          scales: document.getElementById("id_type").value !== "pie" ? {
+            x: { title: { display: true, text: document.getElementById("titre-x").value } },
+            y: { title: { display: true, text: document.getElementById("titre-y").value } }
+          } : {}
+        }
+      });
+
+      document.getElementById("series-data-json").value = JSON.stringify(data.series_data);
+    });
+  }
+
+  // 🖊 Live update des titres
+  document.addEventListener("input", function (e) {
+    if (["id_titre", "titre-x", "titre-y"].includes(e.target.id)) {
+      updateSelection();
+    }
+  });
+
+  // 🛡 Validation finale avant submit
+  const formulaire = document.querySelector('form[action*="creer_graphique_excel"]');
+  if (formulaire) {
+    formulaire.addEventListener("submit", function (e) {
+      const seriesField = document.getElementById("series-data-json");
+      if (!seriesField.value || seriesField.value === "[]") {
+        e.preventDefault();
+        updateSelection();
+        setTimeout(() => {
+          if (!seriesField.value || seriesField.value === "[]") {
+            alert("Veuillez sélectionner une catégorie et au moins une série.");
+          } else {
+            this.submit();
+          }
+        }, 300);
+      }
+    });
+  }
+
+  // 📌 Déclenche comportement Pie dès le début
+  document.getElementById("id_type").addEventListener("change", () => {
+    applyPieBehavior();
+    updateSelection();
+  });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Sélectionner les colonnes</h2>
+  <form method="post" action="{% url 'creer_graphique_excel' slug=slug %}">
+    {% csrf_token %}
+    <label for="categorie">Colonne des catégories :</label>
+    <select name="categorie" required>
+      {% for col in colonnes %}
+        <option value="{{ col }}">{{ col }}</option>
+      {% endfor %}
+    </select>
+    <br><br>
+    <label for="series">Colonnes des séries (Ctrl+clic pour sélection multiple) :</label>
+    <select name="series" multiple required>
+      {% for col in colonnes %}
+        <option value="{{ col }}">{{ col }}</option>
+      {% endfor %}
+    </select>
+    <br><br>
+    <button type="submit">Créer le graphique</button>
+  </form>
+{% endblock %}
