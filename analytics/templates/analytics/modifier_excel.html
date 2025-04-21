@@ -60,33 +60,43 @@ document.addEventListener("DOMContentLoaded", function () {
   const titreXInput = document.getElementById("titre-x");
   const titreYInput = document.getElementById("titre-y");
 
+
   function renderColumnCheckboxes() {
-    const container = document.getElementById("colonnes-container");
-    container.innerHTML = `
-      <h4>Colonne des catégories :</h4>
-      ${colonnes.map(col => `
-        <label><input type="radio" name="categorie" value="${col}" ${seriesData[0].categories[0] === col ? 'checked' : ''}> ${col}</label><br>
-      `).join('')}
+  const container = document.getElementById("colonnes-container");
+  container.innerHTML = `
+    <h4>Colonne des catégories :</h4>
+    ${colonnes.map(col => `
+      <label><input type="radio" name="categorie" value="${col}"> ${col}</label><br>
+    `).join('')}
 
-      <h4>Colonnes des séries :</h4>
-      ${colonnes.map(col => `
-        <label><input type="checkbox" class="serie-checkbox" value="${col}" ${seriesData.some(s => s.nom === col) ? 'checked' : ''}> ${col}</label><br>
-      `).join('')}
-      <p id="pie-warning" style="display:none; color: #888; font-style: italic;">
-        Pour un camembert, une seule série est autorisée.
-      </p>
-    `;
+    <h4>Colonnes des séries :</h4>
+    ${colonnes.map(col => `
+      <label><input type="checkbox" class="serie-checkbox" value="${col}" ${seriesData.some(s => s.nom === col) ? 'checked' : ''}> ${col}</label><br>
+    `).join('')}
 
-    document.querySelectorAll(".serie-checkbox").forEach(cb => {
-      cb.addEventListener("change", updatePreview);
-    });
+    <p id="pie-warning" style="display:none; color: #888; font-style: italic;">
+      Pour un camembert, une seule série est autorisée.
+    </p>
+  `;
 
-    document.querySelectorAll('input[name="categorie"]').forEach(btn => {
-      btn.addEventListener("change", updatePreview);
-    });
+  document.querySelectorAll(".serie-checkbox").forEach(cb => {
+    cb.addEventListener("change", updatePreview);
+  });
 
-    applyPieBehavior();
-  }
+  // Nouvelle logique pour activer la radio correctement
+  document.querySelectorAll('input[name="categorie"]').forEach(input => {
+    if (seriesData[0].categories[0] === input.value) {
+      input.checked = true;
+    }
+    input.addEventListener('change', updatePreview);
+  });
+
+  applyPieBehavior();
+}
+
+
+
+
 
   function applyPieBehavior() {
     const type = typeSelect.value;
