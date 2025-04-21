@@ -172,14 +172,15 @@ def creer_graphique_excel(request, slug):
     return redirect('importer_excel', slug=slug)    
 
 
+
+
 from django.shortcuts import get_object_or_404, render, redirect
 from .models import Graphique, SerieDonnee, SousThematique
-import pandas as pd
+from django.core.serializers.json import DjangoJSONEncoder
 import json
-from io import StringIO
 
 
-def modifier_graphique_excel(request, graph_id):
+""" def modifier_graphique_excel(request, graph_id):
     graphique = get_object_or_404(Graphique, id=graph_id)
     sous_thematique = graphique.sous_thematique
 
@@ -196,7 +197,6 @@ def modifier_graphique_excel(request, graph_id):
         graphique.titre_ordonnée = request.POST.get("titre-y", "")
         graphique.save()
 
-        # Supprime les anciennes séries
         graphique.series.all().delete()
 
         for serie in series_data:
@@ -211,19 +211,110 @@ def modifier_graphique_excel(request, graph_id):
 
         return redirect('dashboard', slug=sous_thematique.slug)
 
-    # 🌱 Préparation du formulaire avec données existantes
-    colonnes = []
-    if graphique.series.exists():
-        colonnes = list(graphique.series.first().categories)
-        request.session['excel_data'] = pd.DataFrame({
-            serie.nom: serie.valeurs for serie in graphique.series.all()
-        }, index=colonnes).to_json()
+    colonnes_series = list(graphique.series.values_list('nom', flat=True))
+    categorie_sample = graphique.series.first().categories if graphique.series.exists() else []
 
-    return render(request, 'analytics/importer_excel.html', {
-        'slug': sous_thematique.slug,
+    series_data = [
+        {
+            "nom": serie.nom,
+            "valeurs": serie.valeurs,
+            "categories": serie.categories,
+            "couleur": serie.couleur,
+            "couleurs_camembert": serie.couleurs_camembert
+        }
+        for serie in graphique.series.all()
+    ]
+
+    return render(request, 'analytics/modifier_excel.html', {
         'graphique': graphique,
-        'mode': 'edition',
+        'slug': sous_thematique.slug,
+        'graph_id': graphique.id,
+        'colonnes_series': colonnes_series,
+        'categorie_sample': categorie_sample,
+        'series_data': json.dumps(series_data, cls=DjangoJSONEncoder)
+    }) """
+
+
+from django.shortcuts import get_object_or_404, render, redirect
+from django.http import JsonResponse
+from django.core.serializers.json import DjangoJSONEncoder
+from .models import Graphique, SerieDonnee, SousThematique
+import pandas as pd
+import json
+
+def modifier_graphique_excel(request, graph_id):
+    graphique = get_object_or_404(Graphique, id=graph_id)
+    sous_thematique = graphique.sous_thematique
+
+    # 🆕 Cas spécial : rechargement d'un fichier Excel (AJAX)
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        excel_file = request.FILES['excel_file']
+        try:
+            df = pd.read_excel(excel_file)
+            request.session['excel_data'] = df.to_json()
+            return JsonResponse({
+                "status": "success",
+                "columns": df.columns.tolist()
+            })
+        except Exception as e:
+            return JsonResponse({
+                "status": "error",
+                "message": str(e)
+            })
+
+    # 📝 Soumission standard du formulaire
+    if request.method == 'POST':
+        try:
+            series_data = json.loads(request.POST.get('series_data', '[]'))
+        except json.JSONDecodeError:
+            series_data = []
+
+        graphique.titre = request.POST.get('titre', graphique.titre)
+        graphique.description = request.POST.get('description', '')
+        graphique.type = request.POST.get('type', 'bar')
+        graphique.titre_abscisse = request.POST.get("titre-x", "")
+        graphique.titre_ordonnée = request.POST.get("titre-y", "")
+        graphique.save()
+
+        graphique.series.all().delete()
+
+        for serie in series_data:
+            SerieDonnee.objects.create(
+                graphique=graphique,
+                nom=serie['nom'],
+                categories=serie['categories'],
+                valeurs=serie['valeurs'],
+                couleur=serie.get('couleur', '#3e95cd'),
+                couleurs_camembert=serie.get('couleurs_camembert')
+            )
+
+        return redirect('dashboard', slug=sous_thematique.slug)
+
+    # 🎯 Préparation des données pour affichage initial du formulaire
+    colonnes_series = list(graphique.series.values_list('nom', flat=True))
+    categorie_sample = graphique.series.first().categories if graphique.series.exists() else []
+
+    series_data = [
+        {
+            "nom": serie.nom,
+            "valeurs": serie.valeurs,
+            "categories": serie.categories,
+            "couleur": serie.couleur,
+            "couleurs_camembert": serie.couleurs_camembert
+        }
+        for serie in graphique.series.all()
+    ]
+
+    return render(request, 'analytics/modifier_excel.html', {
+        'graphique': graphique,
+        'slug': sous_thematique.slug,
+        'graph_id': graphique.id,
+        'colonnes_series': colonnes_series,
+        'categorie_sample': categorie_sample,
+        'series_data': json.dumps(series_data, cls=DjangoJSONEncoder)
     })
+
+
 
 
 

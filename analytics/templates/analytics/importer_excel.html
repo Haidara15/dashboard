@@ -2,12 +2,9 @@
 {% load static %}
 {% block content %}
 
-<!-- 🌈 CSS personnalisé -->
 <link rel="stylesheet" href="{% static 'css/importer_excel.css' %}">
 
 <div class="excel-container">
-
-  <!-- 🧭 Barre latérale (formulaire) -->
   <div class="excel-sidebar">
     <h2>📂 Importer Excel</h2>
 
@@ -59,14 +56,12 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- ✅ Script JavaScript -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   let excelColumns = [];
   let selectedX = null;
   let selectedY = [];
 
-  // 📁 Upload fichier Excel
   document.getElementById('excel-file').addEventListener('change', function () {
     const form = document.getElementById('excel-upload-form');
     const formData = new FormData(form);
@@ -89,7 +84,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // 🧩 Affiche les colonnes détectées
   function renderColumnCheckboxes() {
     const container = document.getElementById("colonnes-container");
     container.innerHTML = `
@@ -116,7 +110,11 @@ document.addEventListener("DOMContentLoaded", function () {
     updateSelection();
   }
 
-  // 🔁 Gestion Pie Chart
+  document.getElementById("id_type").addEventListener("change", () => {
+    applyPieBehavior();
+    updateSelection();
+  });
+
   function applyPieBehavior() {
     const type = document.getElementById("id_type").value;
     const checkboxes = document.querySelectorAll('.serie-checkbox');
@@ -148,14 +146,15 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // 🔁 Update preview & données
   function updateSelection() {
     selectedX = document.querySelector('input[name="categorie"]:checked')?.value;
     selectedY = Array.from(document.querySelectorAll('.serie-checkbox:checked')).map(cb => cb.value);
-    if (selectedX && selectedY.length > 0) genererPreview();
+
+    if (selectedX && selectedY.length > 0) {
+      genererPreview();
+    }
   }
 
-  // 🎨 Génère l'aperçu via API
   function genererPreview() {
     fetch("/api/generer-graphique-preview/", {
       method: "POST",
@@ -172,11 +171,23 @@ document.addEventListener("DOMContentLoaded", function () {
     .then(data => {
       if (window.previewChart) window.previewChart.destroy();
 
+      let activeSeries = data.series_data || [];
+      const chartType = document.getElementById("id_type").value;
+      if (chartType === "pie" && activeSeries.length > 1) {
+        activeSeries = [activeSeries[0]];
+      }
+
       window.previewChart = new Chart(document.getElementById("preview-chart"), {
-        type: document.getElementById("id_type").value,
+        type: chartType,
         data: {
           labels: data.labels,
-          datasets: data.datasets
+          datasets: activeSeries.map(serie => ({
+            label: serie.nom,
+            data: serie.valeurs,
+            backgroundColor: chartType === "pie" ? serie.couleurs_camembert : serie.couleur,
+            borderColor: chartType === "pie" ? [] : "#333",
+            borderWidth: 1
+          }))
         },
         options: {
           responsive: true,
@@ -184,25 +195,23 @@ document.addEventListener("DOMContentLoaded", function () {
             legend: { position: "bottom" },
             title: { display: true, text: document.getElementById("id_titre").value || "Aperçu" }
           },
-          scales: document.getElementById("id_type").value !== "pie" ? {
+          scales: chartType !== "pie" ? {
             x: { title: { display: true, text: document.getElementById("titre-x").value } },
             y: { title: { display: true, text: document.getElementById("titre-y").value } }
           } : {}
         }
       });
 
-      document.getElementById("series-data-json").value = JSON.stringify(data.series_data);
+      document.getElementById("series-data-json").value = JSON.stringify(activeSeries);
     });
   }
 
-  // 🖊 Live update des titres
   document.addEventListener("input", function (e) {
     if (["id_titre", "titre-x", "titre-y"].includes(e.target.id)) {
       updateSelection();
     }
   });
 
-  // 🛡 Validation finale avant submit
   const formulaire = document.querySelector('form[action*="creer_graphique_excel"]');
   if (formulaire) {
     formulaire.addEventListener("submit", function (e) {
@@ -221,7 +230,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // 📌 Déclenche comportement Pie dès le début
   document.getElementById("id_type").addEventListener("change", () => {
     applyPieBehavior();
     updateSelection();

@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/importer_excel.css' %}">
+
+<div class="excel-container">
+  <div class="excel-sidebar">
+    <h2>✏️ Modifier le graphique</h2>
+
+    <!-- 📁 Formulaire pour charger le fichier -->
+    <form id="excel-upload-form" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="file" name="excel_file" id="excel-file" accept=".xlsx">
+    </form>
+
+    <form method="post" action="{% url 'modifier_graphique_excel' graph_id=graphique.id %}" id="edit-graph-form">
+      {% csrf_token %}
+
+      <label for="id_titre">Titre :</label>
+      <input type="text" name="titre" id="id_titre" value="{{ graphique.titre }}" required>
+
+      <label for="id_type">Type de graphique :</label>
+      <select name="type" id="id_type">
+        <option value="bar" {% if graphique.type == 'bar' %}selected{% endif %}>Barres</option>
+        <option value="line" {% if graphique.type == 'line' %}selected{% endif %}>Lignes</option>
+        <option value="pie" {% if graphique.type == 'pie' %}selected{% endif %}>Camembert</option>
+      </select>
+
+      <label for="id_description">Description :</label>
+      <textarea name="description" id="id_description" rows="3">{{ graphique.description }}</textarea>
+
+      <label for="titre-x">Titre axe X :</label>
+      <input type="text" name="titre-x" id="titre-x" value="{{ graphique.titre_abscisse }}">
+
+      <label for="titre-y">Titre axe Y :</label>
+      <input type="text" name="titre-y" id="titre-y" value="{{ graphique.titre_ordonnée }}">
+
+      <div id="colonnes-container"></div>
+
+      <input type="hidden" name="series_data" id="series-data-json">
+      <button type="submit" class="submit-btn">✅ Enregistrer les modifications</button>
+    </form>
+  </div>
+
+  <div class="excel-main">
+    <canvas id="preview-chart"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  let colonnes = {{ colonnes_series|safe }};
+  let categories = {{ categorie_sample|safe }};
+  let seriesData = {{ series_data|safe }};
+
+  const titreInput = document.getElementById("id_titre");
+  const typeSelect = document.getElementById("id_type");
+  const titreXInput = document.getElementById("titre-x");
+  const titreYInput = document.getElementById("titre-y");
+
+  function renderColumnCheckboxes() {
+    const container = document.getElementById("colonnes-container");
+    container.innerHTML = `
+      <h4>Colonne des catégories :</h4>
+      ${colonnes.map(col => `
+        <label><input type="radio" name="categorie" value="${col}" ${seriesData[0].categories[0] === col ? 'checked' : ''}> ${col}</label><br>
+      `).join('')}
+
+      <h4>Colonnes des séries :</h4>
+      ${colonnes.map(col => `
+        <label><input type="checkbox" class="serie-checkbox" value="${col}" ${seriesData.some(s => s.nom === col) ? 'checked' : ''}> ${col}</label><br>
+      `).join('')}
+      <p id="pie-warning" style="display:none; color: #888; font-style: italic;">
+        Pour un camembert, une seule série est autorisée.
+      </p>
+    `;
+
+    document.querySelectorAll(".serie-checkbox").forEach(cb => {
+      cb.addEventListener("change", updatePreview);
+    });
+
+    document.querySelectorAll('input[name="categorie"]').forEach(btn => {
+      btn.addEventListener("change", updatePreview);
+    });
+
+    applyPieBehavior();
+  }
+
+  function applyPieBehavior() {
+    const type = typeSelect.value;
+    const checkboxes = document.querySelectorAll('.serie-checkbox');
+    const warning = document.getElementById("pie-warning");
+
+    if (type === "pie") {
+      warning.style.display = "block";
+      const checked = Array.from(checkboxes).filter(cb => cb.checked);
+      if (checked.length > 1) {
+        checked.forEach((cb, index) => {
+          cb.checked = index === 0;
+        });
+      }
+      checkboxes.forEach(cb => {
+        cb.onclick = function () {
+          if (this.checked) {
+            checkboxes.forEach(other => {
+              if (other !== this) other.checked = false;
+            });
+          }
+          updatePreview();
+        };
+      });
+    } else {
+      warning.style.display = "none";
+      checkboxes.forEach(cb => {
+        cb.onclick = () => updatePreview();
+      });
+    }
+  }
+
+  function updatePreview() {
+    const chartType = typeSelect.value;
+    const titre = titreInput.value;
+    const titreX = titreXInput.value;
+    const titreY = titreYInput.value;
+
+    const selectedCategorie = document.querySelector('input[name="categorie"]:checked');
+    let updatedLabels = categories;
+    if (selectedCategorie) {
+      const selectedName = selectedCategorie.value;
+      const matchSerie = seriesData.find(s => s.nom === selectedName);
+      if (matchSerie) updatedLabels = matchSerie.categories;
+    }
+
+    const activeSeries = Array.from(document.querySelectorAll(".serie-checkbox:checked"))
+      .map(cb => seriesData.find(s => s.nom === cb.value))
+      .filter(Boolean);
+
+    if (chartType === 'pie' && activeSeries.length > 1) {
+      activeSeries.splice(1); // Ne garder qu’une seule série
+    }
+
+    if (window.previewChart) window.previewChart.destroy();
+
+    window.previewChart = new Chart(document.getElementById("preview-chart"), {
+      type: chartType,
+      data: {
+        labels: updatedLabels,
+        datasets: activeSeries.map(serie => ({
+          label: serie.nom,
+          data: serie.valeurs,
+          backgroundColor: chartType === "pie" ? serie.couleurs_camembert : serie.couleur,
+          borderColor: chartType === "pie" ? [] : "#333",
+          borderWidth: 1
+        }))
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "bottom" },
+          title: { display: true, text: titre }
+        },
+        scales: chartType !== "pie" ? {
+          x: { title: { display: true, text: titreX } },
+          y: { title: { display: true, text: titreY } }
+        } : {}
+      }
+    });
+
+    document.getElementById("series-data-json").value = JSON.stringify(activeSeries);
+  }
+
+  document.getElementById("excel-file").addEventListener("change", function () {
+    const form = document.getElementById("excel-upload-form");
+    const formData = new FormData(form);
+
+    fetch("", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === "success") {
+        colonnes = data.columns;
+        renderColumnCheckboxes();
+      } else {
+        alert("Erreur: " + data.message);
+      }
+    });
+  });
+
+  [titreInput, titreXInput, titreYInput, typeSelect].forEach(el => {
+    el.addEventListener("input", updatePreview);
+    el.addEventListener("change", () => {
+      updatePreview();
+      applyPieBehavior();
+    });
+  });
+
+  renderColumnCheckboxes();
+  updatePreview();
+});
+</script>
+
+{% endblock %}
