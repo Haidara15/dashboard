@@ -106,6 +106,10 @@ document.addEventListener("DOMContentLoaded", function () {
       radio.addEventListener('change', updateSelection);
     });
 
+    document.querySelectorAll('.serie-color').forEach(input => {
+      input.addEventListener("input", updateSelection);
+    });
+
     applyPieBehavior();
     updateSelection();
   }
@@ -144,7 +148,6 @@ document.addEventListener("DOMContentLoaded", function () {
   function updateSelection() {
     selectedX = document.querySelector('input[name="categorie"]:checked')?.value;
     selectedY = Array.from(document.querySelectorAll('.serie-checkbox:checked')).map(cb => cb.value);
-
     if (selectedX && selectedY.length > 0) {
       genererPreview();
     }
@@ -157,7 +160,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const colName = cb.value;
       const colorInput = document.querySelector(`.serie-color[data-nom="${colName}"]`);
       const color = colorInput ? colorInput.value : "#3e95cd";
-
       return {
         nom: colName,
         couleur: color
@@ -180,7 +182,6 @@ document.addEventListener("DOMContentLoaded", function () {
       if (window.previewChart) window.previewChart.destroy();
 
       let series = data.series_data || [];
-
       if (chartType === "pie" && series.length > 1) {
         series = [series[0]];
       }
@@ -213,12 +214,6 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("series-data-json").value = JSON.stringify(series);
     });
   }
-
-  document.addEventListener("input", function (e) {
-    if (["id_titre", "titre-x", "titre-y"].includes(e.target.id)) {
-      updateSelection();
-    }
-  });
 
   const formulaire = document.querySelector('form[action*="creer_graphique_excel"]');
   if (formulaire) {

@@ -8,7 +8,6 @@
   <div class="excel-sidebar">
     <h2 style="padding:20px 0px;">✏️ Modifier le graphique</h2>
 
-    <!-- Fichier Excel -->
     <form id="excel-upload-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <label for="excel-file" style="font-weight: bold;">📁 Recharger un fichier Excel :</label><br>
@@ -16,7 +15,6 @@
       <p style="font-size: 0.85em; color: #666;">(Remplace les données actuelles. Le fichier ne sera pas enregistré si vous n'enregistrez pas le graphique ensuite.)</p>
     </form>
 
-    <!-- Form principal -->
     <form method="post" action="{% url 'modifier_graphique_excel' graph_id=graphique.id %}" id="edit-graph-form">
       {% csrf_token %}
       <label for="id_titre">Titre :</label>
@@ -100,6 +98,11 @@ document.addEventListener("DOMContentLoaded", function () {
       input.addEventListener('change', updatePreview);
     });
 
+    // ✅ Rafraîchir le graphique lorsqu’on change la couleur
+    document.querySelectorAll(".serie-color").forEach(input => {
+      input.addEventListener("input", updatePreview);
+    });
+
     applyPieBehavior();
   }
 
@@ -152,7 +155,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const colName = cb.value;
       const colorInput = document.querySelector(`.serie-color[data-nom="${colName}"]`);
       const color = colorInput ? colorInput.value : "#3e95cd";
-
       return {
         nom: colName,
         categories: updatedLabels,
