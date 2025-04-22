@@ -8,17 +8,14 @@
   <div class="excel-sidebar">
     <h2>📂 Importer Excel</h2>
 
-    <!-- 📁 Formulaire pour charger le fichier -->
     <form id="excel-upload-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <input type="file" name="excel_file" id="excel-file" accept=".xlsx" required>
     </form>
 
-    <!-- 🧾 Formulaire principal -->
     <form method="post" action="{% url 'creer_graphique_excel' slug=slug %}">
       {% csrf_token %}
 
-      <!-- 🔢 Colonnes dynamiques -->
       <div id="colonnes-container"></div>
 
       <label for="id_titre">Titre :</label>
@@ -40,22 +37,18 @@
       <label for="titre-y">Titre axe Y :</label>
       <input type="text" name="titre-y" id="titre-y">
 
-      <!-- Champ caché pour envoyer les données encodées -->
       <input type="hidden" name="series_data" id="series-data-json">
 
       <button type="submit" class="submit-btn">✅ Enregistrer le graphique</button>
     </form>
   </div>
 
-  <!-- 🖼️ Zone d'aperçu du graphique -->
   <div class="excel-main">
     <canvas id="preview-chart"></canvas>
   </div>
 </div>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   let excelColumns = [];
@@ -84,46 +77,38 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  
-
   function renderColumnCheckboxes() {
-  const container = document.getElementById("colonnes-container");
-  container.innerHTML = `
-    <h4>Colonne pour les catégories :</h4>
-    ${excelColumns.map(col => `
-      <label>
-        <input type="radio" name="categorie" value="${col}"> ${col}
-      </label><br>
-    `).join('')}
+    const container = document.getElementById("colonnes-container");
+    container.innerHTML = `
+      <h4>Colonne pour les catégories :</h4>
+      ${excelColumns.map(col => `
+        <label><input type="radio" name="categorie" value="${col}"> ${col}</label><br>
+      `).join('')}
 
-    <h4>Colonnes pour les séries :</h4>
-    ${excelColumns.map(col => `
-      <label>
-        <input type="checkbox" class="serie-checkbox" value="${col}"> ${col}
-      </label><br>
-    `).join('')}
+      <h4>Colonnes des séries :</h4>
+      ${excelColumns.map((col, index) => {
+        const defaultColor = `hsl(${(index * 60) % 360}, 70%, 60%)`;
+        return `
+          <label>
+            <input type="checkbox" class="serie-checkbox" value="${col}">
+            ${col}
+            <input type="color" class="serie-color" data-nom="${col}" value="${defaultColor}">
+          </label><br>
+        `;
+      }).join('')}
 
-    <p id="pie-warning" style="display:none; color: #888; font-style: italic;">
-      Pour un camembert, une seule série est autorisée.
-    </p>
-  `;
+      <p id="pie-warning" style="display:none; color: #888; font-style: italic;">
+        Pour un camembert, une seule série est autorisée.
+      </p>
+    `;
 
-  // 🔥 Ajoute les événements dynamiquement
-  document.querySelectorAll('input[name="categorie"]').forEach(radio => {
-    radio.addEventListener('change', updateSelection);
-  });
+    document.querySelectorAll('input[name="categorie"]').forEach(radio => {
+      radio.addEventListener('change', updateSelection);
+    });
 
-  applyPieBehavior();
-  updateSelection();
-}
-
-
-
-
-  document.getElementById("id_type").addEventListener("change", () => {
     applyPieBehavior();
     updateSelection();
-  });
+  }
 
   function applyPieBehavior() {
     const type = document.getElementById("id_type").value;
@@ -166,6 +151,19 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function genererPreview() {
+    const chartType = document.getElementById("id_type").value;
+
+    const activeSeries = Array.from(document.querySelectorAll('.serie-checkbox:checked')).map(cb => {
+      const colName = cb.value;
+      const colorInput = document.querySelector(`.serie-color[data-nom="${colName}"]`);
+      const color = colorInput ? colorInput.value : "#3e95cd";
+
+      return {
+        nom: colName,
+        couleur: color
+      };
+    });
+
     fetch("/api/generer-graphique-preview/", {
       method: "POST",
       headers: {
@@ -174,24 +172,24 @@ document.addEventListener("DOMContentLoaded", function () {
       },
       body: JSON.stringify({
         categorie: selectedX,
-        series: selectedY
+        series: activeSeries
       })
     })
     .then(res => res.json())
     .then(data => {
       if (window.previewChart) window.previewChart.destroy();
 
-      let activeSeries = data.series_data || [];
-      const chartType = document.getElementById("id_type").value;
-      if (chartType === "pie" && activeSeries.length > 1) {
-        activeSeries = [activeSeries[0]];
+      let series = data.series_data || [];
+
+      if (chartType === "pie" && series.length > 1) {
+        series = [series[0]];
       }
 
       window.previewChart = new Chart(document.getElementById("preview-chart"), {
         type: chartType,
         data: {
           labels: data.labels,
-          datasets: activeSeries.map(serie => ({
+          datasets: series.map(serie => ({
             label: serie.nom,
             data: serie.valeurs,
             backgroundColor: chartType === "pie" ? serie.couleurs_camembert : serie.couleur,
@@ -212,7 +210,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       });
 
-      document.getElementById("series-data-json").value = JSON.stringify(activeSeries);
+      document.getElementById("series-data-json").value = JSON.stringify(series);
     });
   }
 

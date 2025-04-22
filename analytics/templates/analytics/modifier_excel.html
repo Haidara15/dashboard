@@ -6,17 +6,19 @@
 
 <div class="excel-container">
   <div class="excel-sidebar">
-
     <h2 style="padding:20px 0px;">✏️ Modifier le graphique</h2>
 
+    <!-- Fichier Excel -->
     <form id="excel-upload-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
-      <input type="file" name="excel_file" id="excel-file" accept=".xlsx">
+      <label for="excel-file" style="font-weight: bold;">📁 Recharger un fichier Excel :</label><br>
+      <input type="file" name="excel_file" id="excel-file" accept=".xlsx" style="margin-top: 5px;">
+      <p style="font-size: 0.85em; color: #666;">(Remplace les données actuelles. Le fichier ne sera pas enregistré si vous n'enregistrez pas le graphique ensuite.)</p>
     </form>
 
+    <!-- Form principal -->
     <form method="post" action="{% url 'modifier_graphique_excel' graph_id=graphique.id %}" id="edit-graph-form">
       {% csrf_token %}
-
       <label for="id_titre">Titre :</label>
       <input type="text" name="titre" id="id_titre" value="{{ graphique.titre }}" required>
 
@@ -75,9 +77,19 @@ document.addEventListener("DOMContentLoaded", function () {
       <p id="pie-warning" style="display:none; color:red; font-style: italic;margin:10px 0px;">
         Pour un camembert, une seule série est autorisée.
       </p>
-      ${colonnes.map(col => `
-        <label><input type="checkbox" class="serie-checkbox" value="${col}" ${seriesData.some(s => s.nom === col) ? 'checked' : ''}> ${col}</label><br>
-      `).join('')}
+
+      ${colonnes.map(col => {
+        const existingSerie = seriesData.find(s => s.nom === col);
+        const defaultColor = existingSerie?.couleur || `hsl(${(colonnes.indexOf(col) * 60) % 360}, 70%, 60%)`;
+
+        return `
+          <label>
+            <input type="checkbox" class="serie-checkbox" value="${col}" ${existingSerie ? 'checked' : ''}>
+            ${col}
+            <input type="color" class="serie-color" data-nom="${col}" value="${defaultColor}">
+          </label><br>
+        `;
+      }).join('')}
     `;
 
     document.querySelectorAll(".serie-checkbox").forEach(cb => {
@@ -136,17 +148,19 @@ document.addEventListener("DOMContentLoaded", function () {
       updatedLabels = excelRows.map(row => row[selectedName]);
     }
 
-    const activeSeries = Array.from(document.querySelectorAll(".serie-checkbox:checked"))
-      .map(cb => {
-        const colName = cb.value;
-        return {
-          nom: colName,
-          categories: updatedLabels,
-          valeurs: excelRows.map(row => row[colName]),
-          couleur: "#3e95cd",
-          couleurs_camembert: excelRows.map((_, i) => `hsl(${(i * 50) % 360}, 70%, 60%)`)
-        };
-      });
+    const activeSeries = Array.from(document.querySelectorAll(".serie-checkbox:checked")).map(cb => {
+      const colName = cb.value;
+      const colorInput = document.querySelector(`.serie-color[data-nom="${colName}"]`);
+      const color = colorInput ? colorInput.value : "#3e95cd";
+
+      return {
+        nom: colName,
+        categories: updatedLabels,
+        valeurs: excelRows.map(row => row[colName]),
+        couleur: color,
+        couleurs_camembert: excelRows.map((_, i) => `hsl(${(i * 50) % 360}, 70%, 60%)`)
+      };
+    });
 
     if (chartType === 'pie' && activeSeries.length > 1) {
       activeSeries.splice(1);

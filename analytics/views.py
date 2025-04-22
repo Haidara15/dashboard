@@ -76,54 +76,66 @@ import pandas as pd
 from django.http import JsonResponse
 
 
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+import pandas as pd
+from io import StringIO
+
+@csrf_exempt
 def generer_graphique_preview(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        categorie_col = data.get('categorie')
-        series_cols = data.get('series', [])
-        graph_type = data.get("type", "bar")  # utile si tu veux traiter le type ici
+        try:
+            data = json.loads(request.body)
+            categorie_col = data.get('categorie')
+            series = data.get('series', [])
+            graph_type = data.get("type", "bar")  # optionnel, utile si tu veux traiter plus tard
 
-        df_json = request.session.get('excel_data')
-        if not df_json:
-            return JsonResponse({"error": "Aucune donnée Excel en session."}, status=400)
+            df_json = request.session.get('excel_data')
+            if not df_json:
+                return JsonResponse({"error": "Aucune donnée Excel en session."}, status=400)
 
-        df = pd.read_json(StringIO(df_json))
-        labels = df[categorie_col].astype(str).tolist()
+            df = pd.read_json(StringIO(df_json))
 
-        datasets = []
-        colors = ["#3e95cd", "#8e5ea2", "#3cba9f", "#e8c3b9", "#f39c12", "#2ecc71"]
+            if categorie_col not in df.columns:
+                return JsonResponse({"error": f"Colonne '{categorie_col}' introuvable."}, status=400)
 
-        series_data = []
+            labels = df[categorie_col].astype(str).tolist()
+            series_data = []
 
-        for i, col in enumerate(series_cols):
-            valeurs = df[col].tolist()
-            couleur = colors[i % len(colors)]
+            for serie in series:
+                nom = serie.get("nom")
+                couleur = serie.get("couleur", "#3e95cd")
 
-            datasets.append({
-                "label": col,
-                "data": valeurs,
-                "backgroundColor": couleur
+                if nom not in df.columns:
+                    continue  # sécurité : ignore les colonnes inexistantes
+
+                valeurs = df[nom].tolist()
+
+                serie_obj = {
+                    "nom": nom,
+                    "valeurs": valeurs,
+                    "couleur": couleur,
+                    "categories": labels
+                }
+
+                if graph_type == "pie":
+                    serie_obj["couleurs_camembert"] = [
+                        f"hsl({(i * 50) % 360}, 70%, 60%)" for i in range(len(valeurs))
+                    ]
+
+                series_data.append(serie_obj)
+
+            return JsonResponse({
+                "labels": labels,
+                "series_data": series_data
             })
 
-            serie = {
-                "nom": col,
-                "categories": labels,
-                "valeurs": valeurs,
-                "couleur": couleur
-            }
-
-            if graph_type == "pie":
-                serie["couleurs_camembert"] = [couleur] * len(valeurs)
-
-            series_data.append(serie)
-
-        return JsonResponse({
-            "labels": labels,
-            "datasets": datasets,
-            "series_data": series_data
-        })
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
 
 
 
@@ -137,14 +149,35 @@ from django.shortcuts import get_object_or_404, redirect
 import json
 from .models import Graphique, SerieDonnee, SousThematique
 
+
+import json
+import pandas as pd
+from io import StringIO
+from colorsys import hsv_to_rgb
+
+from django.shortcuts import get_object_or_404, redirect, render
+from django.http import JsonResponse
+from django.core.serializers.json import DjangoJSONEncoder
+from .models import Graphique, SerieDonnee, SousThematique
+
+
+def generate_color(index):
+    hue = (index * 0.2) % 1
+    rgb = hsv_to_rgb(hue, 0.6, 0.85)
+    return '#{:02x}{:02x}{:02x}'.format(
+        int(rgb[0] * 255),
+        int(rgb[1] * 255),
+        int(rgb[2] * 255)
+    )
+
+
+# 🟢 VUE DE CRÉATION
 def creer_graphique_excel(request, slug):
     if request.method == 'POST':
         try:
             series_data = json.loads(request.POST.get('series_data', '[]'))
         except json.JSONDecodeError:
             series_data = []
-
-        print("📨 Données JSON reçues :", series_data)
 
         sous_thematique = get_object_or_404(SousThematique, slug=slug)
 
@@ -157,40 +190,33 @@ def creer_graphique_excel(request, slug):
             sous_thematique=sous_thematique
         )
 
-        for serie in series_data:
-            print("📊 Ajout série :", serie['nom'], serie['valeurs'])
+        # ✅ Sauvegarder le fichier Excel si fourni
+        excel_file = request.FILES.get('excel_file')
+        if excel_file:
+            graphique.fichier_excel = excel_file
+            graphique.save()
+
+        for idx, serie in enumerate(series_data):
             SerieDonnee.objects.create(
                 graphique=graphique,
                 nom=serie['nom'],
                 categories=serie['categories'],
                 valeurs=serie['valeurs'],
-                couleur=serie.get('couleur', '#3e95cd'),
-                couleurs_camembert=serie.get('couleurs_camembert')  # ✅ important pour "pie"
+                couleur=serie.get('couleur', generate_color(idx)),
+                couleurs_camembert=serie.get('couleurs_camembert')
             )
 
         return redirect('dashboard', slug=slug)
 
-    return redirect('importer_excel', slug=slug)    
+    return redirect('importer_excel', slug=slug)
 
 
-
-
-
-#############  Vue de modification #############################
-
-from django.shortcuts import get_object_or_404, render, redirect
-from django.http import JsonResponse
-from django.core.serializers.json import DjangoJSONEncoder
-from .models import Graphique, SerieDonnee, SousThematique
-import pandas as pd
-import json
-from io import StringIO
-
+# 🟠 VUE DE MODIFICATION
 def modifier_graphique_excel(request, graph_id):
     graphique = get_object_or_404(Graphique, id=graph_id)
     sous_thematique = graphique.sous_thematique
 
-    # 🆕 Rechargement AJAX
+    # 📁 Rechargement AJAX du fichier Excel (sans sauvegarde)
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
         try:
@@ -206,7 +232,7 @@ def modifier_graphique_excel(request, graph_id):
                 "message": str(e)
             })
 
-    # 📝 Enregistrement
+    # 📝 Enregistrement du graphique modifié
     if request.method == 'POST':
         try:
             series_data = json.loads(request.POST.get('series_data', '[]'))
@@ -218,23 +244,27 @@ def modifier_graphique_excel(request, graph_id):
         graphique.type = request.POST.get('type', 'bar')
         graphique.titre_abscisse = request.POST.get("titre-x", "")
         graphique.titre_ordonnée = request.POST.get("titre-y", "")
-        graphique.save()
 
+        # ✅ Mise à jour du fichier si un nouveau est chargé
+        if 'excel_file' in request.FILES:
+            graphique.fichier_excel = request.FILES['excel_file']
+
+        graphique.save()
         graphique.series.all().delete()
 
-        for serie in series_data:
+        for idx, serie in enumerate(series_data):
             SerieDonnee.objects.create(
                 graphique=graphique,
                 nom=serie['nom'],
                 categories=serie['categories'],
                 valeurs=serie['valeurs'],
-                couleur=serie.get('couleur', '#3e95cd'),
+                couleur=serie.get('couleur', generate_color(idx)),
                 couleurs_camembert=serie.get('couleurs_camembert')
             )
 
         return redirect('dashboard', slug=sous_thematique.slug)
 
-    # 🎯 Chargement des données
+    # 🔄 Chargement des colonnes Excel
     colonnes_disponibles = []
     excel_rows = []
     categorie_colonne = graphique.series.first().nom if graphique.series.exists() else ""
@@ -245,15 +275,17 @@ def modifier_graphique_excel(request, graph_id):
             df = pd.read_json(request.session['excel_data'])
             colonnes_disponibles = df.columns.tolist()
             excel_rows = df.to_dict(orient="records")
-        except Exception:
-            pass
-    elif hasattr(graphique, 'fichier_excel') and graphique.fichier_excel:
+        except Exception as e:
+            print("⚠️ Erreur lecture session Excel :", e)
+    elif graphique.fichier_excel:
         try:
             df = pd.read_excel(graphique.fichier_excel.path)
             colonnes_disponibles = df.columns.tolist()
             excel_rows = df.to_dict(orient="records")
-        except Exception:
-            pass
+        except Exception as e:
+            print("⚠️ Erreur lecture fichier_excel :", e)
+    else:
+        print("⚠️ Aucun fichier Excel attaché à ce graphique.")
 
     series_data = [
         {
@@ -276,14 +308,6 @@ def modifier_graphique_excel(request, graph_id):
         'series_data': json.dumps(series_data, cls=DjangoJSONEncoder),
         'excel_rows': json.dumps(excel_rows, cls=DjangoJSONEncoder)
     })
-
-
-
-
-
-
-
-
 
 
 

@@ -45,6 +45,7 @@ class Graphique(models.Model):
     titre_ordonnée = models.CharField(max_length=100, blank=True, null=True)
     date_ajout = models.DateTimeField(auto_now_add=True)
     colonne_categorie = models.CharField(max_length=255, blank=True, null=True)
+    fichier_excel = models.FileField(upload_to="excels/", null=True, blank=True)
 
     def __str__(self):
         return self.titre
