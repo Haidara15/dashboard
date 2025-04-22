@@ -1,3 +1,4 @@
+import random
 from django.shortcuts import render
 
 
@@ -241,6 +242,17 @@ from django.core.serializers.json import DjangoJSONEncoder
 from .models import Graphique, SerieDonnee, SousThematique
 import pandas as pd
 import json
+from io import StringIO
+
+from io import StringIO
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from .models import Graphique, SousThematique, SerieDonnee
+import pandas as pd
+import json
+import random
+from django.core.serializers.json import DjangoJSONEncoder
+
 
 def modifier_graphique_excel(request, graph_id):
     graphique = get_object_or_404(Graphique, id=graph_id)
@@ -313,8 +325,6 @@ def modifier_graphique_excel(request, graph_id):
         'categorie_sample': categorie_sample,
         'series_data': json.dumps(series_data, cls=DjangoJSONEncoder)
     })
-
-
 
 
 

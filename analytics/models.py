@@ -44,6 +44,7 @@ class Graphique(models.Model):
     titre_abscisse = models.CharField(max_length=100, blank=True, null=True)
     titre_ordonnée = models.CharField(max_length=100, blank=True, null=True)
     date_ajout = models.DateTimeField(auto_now_add=True)
+    colonne_categorie = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.titre
