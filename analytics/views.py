@@ -175,66 +175,8 @@ def creer_graphique_excel(request, slug):
 
 
 
-from django.shortcuts import get_object_or_404, render, redirect
-from .models import Graphique, SerieDonnee, SousThematique
-from django.core.serializers.json import DjangoJSONEncoder
-import json
 
-
-""" def modifier_graphique_excel(request, graph_id):
-    graphique = get_object_or_404(Graphique, id=graph_id)
-    sous_thematique = graphique.sous_thematique
-
-    if request.method == 'POST':
-        try:
-            series_data = json.loads(request.POST.get('series_data', '[]'))
-        except json.JSONDecodeError:
-            series_data = []
-
-        graphique.titre = request.POST.get('titre', graphique.titre)
-        graphique.description = request.POST.get('description', '')
-        graphique.type = request.POST.get('type', 'bar')
-        graphique.titre_abscisse = request.POST.get("titre-x", "")
-        graphique.titre_ordonnée = request.POST.get("titre-y", "")
-        graphique.save()
-
-        graphique.series.all().delete()
-
-        for serie in series_data:
-            SerieDonnee.objects.create(
-                graphique=graphique,
-                nom=serie['nom'],
-                categories=serie['categories'],
-                valeurs=serie['valeurs'],
-                couleur=serie.get('couleur', '#3e95cd'),
-                couleurs_camembert=serie.get('couleurs_camembert')
-            )
-
-        return redirect('dashboard', slug=sous_thematique.slug)
-
-    colonnes_series = list(graphique.series.values_list('nom', flat=True))
-    categorie_sample = graphique.series.first().categories if graphique.series.exists() else []
-
-    series_data = [
-        {
-            "nom": serie.nom,
-            "valeurs": serie.valeurs,
-            "categories": serie.categories,
-            "couleur": serie.couleur,
-            "couleurs_camembert": serie.couleurs_camembert
-        }
-        for serie in graphique.series.all()
-    ]
-
-    return render(request, 'analytics/modifier_excel.html', {
-        'graphique': graphique,
-        'slug': sous_thematique.slug,
-        'graph_id': graphique.id,
-        'colonnes_series': colonnes_series,
-        'categorie_sample': categorie_sample,
-        'series_data': json.dumps(series_data, cls=DjangoJSONEncoder)
-    }) """
-
+#############  Vue de modification #############################
 
 from django.shortcuts import get_object_or_404, render, redirect
 from django.http import JsonResponse
@@ -243,22 +185,12 @@ from .models import Graphique, SerieDonnee, SousThematique
 import pandas as pd
 import json
 from io import StringIO
-
-from io import StringIO
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
-from .models import Graphique, SousThematique, SerieDonnee
-import pandas as pd
-import json
-import random
-from django.core.serializers.json import DjangoJSONEncoder
-
 
 def modifier_graphique_excel(request, graph_id):
     graphique = get_object_or_404(Graphique, id=graph_id)
     sous_thematique = graphique.sous_thematique
 
-    # 🆕 Cas spécial : rechargement d'un fichier Excel (AJAX)
+    # 🆕 Rechargement AJAX
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
         try:
@@ -274,7 +206,7 @@ def modifier_graphique_excel(request, graph_id):
                 "message": str(e)
             })
 
-    # 📝 Soumission standard du formulaire
+    # 📝 Enregistrement
     if request.method == 'POST':
         try:
             series_data = json.loads(request.POST.get('series_data', '[]'))
@@ -302,9 +234,26 @@ def modifier_graphique_excel(request, graph_id):
 
         return redirect('dashboard', slug=sous_thematique.slug)
 
-    # 🎯 Préparation des données pour affichage initial du formulaire
-    colonnes_series = list(graphique.series.values_list('nom', flat=True))
+    # 🎯 Chargement des données
+    colonnes_disponibles = []
+    excel_rows = []
+    categorie_colonne = graphique.series.first().nom if graphique.series.exists() else ""
     categorie_sample = graphique.series.first().categories if graphique.series.exists() else []
+
+    if 'excel_data' in request.session:
+        try:
+            df = pd.read_json(request.session['excel_data'])
+            colonnes_disponibles = df.columns.tolist()
+            excel_rows = df.to_dict(orient="records")
+        except Exception:
+            pass
+    elif hasattr(graphique, 'fichier_excel') and graphique.fichier_excel:
+        try:
+            df = pd.read_excel(graphique.fichier_excel.path)
+            colonnes_disponibles = df.columns.tolist()
+            excel_rows = df.to_dict(orient="records")
+        except Exception:
+            pass
 
     series_data = [
         {
@@ -321,10 +270,15 @@ def modifier_graphique_excel(request, graph_id):
         'graphique': graphique,
         'slug': sous_thematique.slug,
         'graph_id': graphique.id,
-        'colonnes_series': colonnes_series,
-        'categorie_sample': categorie_sample,
-        'series_data': json.dumps(series_data, cls=DjangoJSONEncoder)
+        'colonnes_disponibles': colonnes_disponibles,
+        'categorie_sample': json.dumps(categorie_sample),
+        'categorie_colonne': categorie_colonne,
+        'series_data': json.dumps(series_data, cls=DjangoJSONEncoder),
+        'excel_rows': json.dumps(excel_rows, cls=DjangoJSONEncoder)
     })
+
+
+
 
 
 

@@ -52,10 +52,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  let colonnes = {{ colonnes_series|safe }};
-  let categories = {{ categorie_sample|safe }};
+  let colonnes = {{ colonnes_disponibles|safe }};
+  const categorieSelectionnee = "{{ categorie_colonne }}";
   let seriesData = {{ series_data|safe }};
-  const categorieSelectionnee = "{{ categorie_selectionnee|default:'' }}";
+  let excelRows = {{ excel_rows|safe }};
+  let defaultCategories = {{ categorie_sample|safe }};
 
   const titreInput = document.getElementById("id_titre");
   const typeSelect = document.getElementById("id_type");
@@ -71,11 +72,9 @@ document.addEventListener("DOMContentLoaded", function () {
       `).join('')}
 
       <h4>Colonnes des séries :</h4>
-
       <p id="pie-warning" style="display:none; color:red; font-style: italic;margin:10px 0px;">
         Pour un camembert, une seule série est autorisée.
       </p>
-
       ${colonnes.map(col => `
         <label><input type="checkbox" class="serie-checkbox" value="${col}" ${seriesData.some(s => s.nom === col) ? 'checked' : ''}> ${col}</label><br>
       `).join('')}
@@ -130,17 +129,24 @@ document.addEventListener("DOMContentLoaded", function () {
     const titreY = titreYInput.value;
 
     const selectedCategorie = document.querySelector('input[name="categorie"]:checked');
-    let updatedLabels = categories;
+    let updatedLabels = defaultCategories;
     if (selectedCategorie) {
       const selectedName = selectedCategorie.value;
       document.getElementById("categorie-selectionnee").value = selectedName;
-      const matchSerie = seriesData.find(s => s.nom === selectedName);
-      if (matchSerie) updatedLabels = matchSerie.valeurs;
+      updatedLabels = excelRows.map(row => row[selectedName]);
     }
 
     const activeSeries = Array.from(document.querySelectorAll(".serie-checkbox:checked"))
-      .map(cb => seriesData.find(s => s.nom === cb.value))
-      .filter(Boolean);
+      .map(cb => {
+        const colName = cb.value;
+        return {
+          nom: colName,
+          categories: updatedLabels,
+          valeurs: excelRows.map(row => row[colName]),
+          couleur: "#3e95cd",
+          couleurs_camembert: excelRows.map((_, i) => `hsl(${(i * 50) % 360}, 70%, 60%)`)
+        };
+      });
 
     if (chartType === 'pie' && activeSeries.length > 1) {
       activeSeries.splice(1);
@@ -176,9 +182,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("series-data-json").value = JSON.stringify(activeSeries);
   }
 
-
-  
-
   document.getElementById("excel-file").addEventListener("change", function () {
     const form = document.getElementById("excel-upload-form");
     const formData = new FormData(form);
@@ -195,6 +198,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (data.status === "success") {
         colonnes = data.columns;
         renderColumnCheckboxes();
+        updatePreview();
       } else {
         alert("Erreur: " + data.message);
       }
