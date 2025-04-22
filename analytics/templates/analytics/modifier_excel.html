@@ -6,7 +6,8 @@
 
 <div class="excel-container">
   <div class="excel-sidebar">
-    <h2>✏️ Modifier le graphique</h2>
+
+    <h2 style="padding:20px 0px;">✏️ Modifier le graphique</h2>
 
     <form id="excel-upload-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
@@ -70,13 +71,14 @@ document.addEventListener("DOMContentLoaded", function () {
       `).join('')}
 
       <h4>Colonnes des séries :</h4>
+
+      <p id="pie-warning" style="display:none; color:red; font-style: italic;margin:10px 0px;">
+        Pour un camembert, une seule série est autorisée.
+      </p>
+
       ${colonnes.map(col => `
         <label><input type="checkbox" class="serie-checkbox" value="${col}" ${seriesData.some(s => s.nom === col) ? 'checked' : ''}> ${col}</label><br>
       `).join('')}
-
-      <p id="pie-warning" style="display:none; color: #888; font-style: italic;">
-        Pour un camembert, une seule série est autorisée.
-      </p>
     `;
 
     document.querySelectorAll(".serie-checkbox").forEach(cb => {
