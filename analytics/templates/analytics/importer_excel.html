@@ -3,6 +3,11 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/importer_excel.css' %}">
+<style>
+  .hidden {
+    display: none;
+  }
+</style>
 
 <div class="excel-container">
   <div class="excel-sidebar">
@@ -16,7 +21,7 @@
     <form method="post" action="{% url 'creer_graphique_excel' slug=slug %}">
       {% csrf_token %}
 
-      <div id="colonnes-container"></div>
+      <div id="colonnes-container" class="hidden"></div>
 
       <label for="id_titre">Titre :</label>
       <input type="text" name="titre" id="id_titre" required>
@@ -70,7 +75,9 @@ document.addEventListener("DOMContentLoaded", function () {
     .then(data => {
       if (data.status === "success") {
         excelColumns = data.columns;
+        document.getElementById("colonnes-container").classList.remove("hidden");
         renderColumnCheckboxes();
+        updateSelection();
       } else {
         alert("Erreur: " + data.message);
       }
@@ -107,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     document.querySelectorAll('.serie-color').forEach(input => {
-      input.addEventListener("input", updateSelection);
+      input.addEventListener('input', updateSelection);
     });
 
     applyPieBehavior();
@@ -237,6 +244,10 @@ document.addEventListener("DOMContentLoaded", function () {
     applyPieBehavior();
     updateSelection();
   });
+
+  document.getElementById("id_titre").addEventListener("input", updateSelection);
+  document.getElementById("titre-x").addEventListener("input", updateSelection);
+  document.getElementById("titre-y").addEventListener("input", updateSelection);
 });
 </script>
 
