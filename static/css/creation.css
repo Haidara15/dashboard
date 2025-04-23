@@ -1,0 +1,104 @@
+/* Conteneur global */
+.excel-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Sidebar ouverte */
+.excel-sidebar {
+  width: 320px;
+  min-width: 280px;
+  background-color: #f9f9f9;
+  border-right: 1px solid #ddd;
+  padding: 20px;
+  overflow-y: auto;
+  transition: width 0.3s ease, padding 0.3s ease;
+  position: relative;
+}
+
+/* Sidebar repliée */
+.excel-sidebar.collapsed {
+  width: 60px;
+  padding: 20px 10px;
+  overflow: hidden;
+}
+
+/* Contenu principal */
+.excel-main {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+/* Bouton de toggle */
+.toggle-btn {
+  position: absolute;
+  top: 10px;
+  right: -15px;
+  background-color: #ddd;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  padding: 5px 10px;
+  cursor: pointer;
+  z-index: 10;
+  transition: background-color 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background-color: #bbb;
+}
+
+/* Titres et labels */
+.excel-sidebar h2 {
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+}
+
+.excel-sidebar label {
+  display: block;
+  font-weight: bold;
+  margin-top: 15px;
+}
+
+/* Inputs, selects, textarea */
+.excel-sidebar input[type="text"],
+.excel-sidebar textarea,
+.excel-sidebar select {
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.excel-sidebar textarea {
+  resize: vertical;
+}
+
+/* Fichier Excel */
+.excel-sidebar input[type="file"] {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+/* Bouton submit */
+.submit-btn {
+  margin-top: 20px;
+  width: 100%;
+  padding: 10px;
+  background-color: #3e95cd;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+  background-color: #357ab8;
+}

@@ -3,9 +3,18 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/importer_excel.css' %}">
+<style>
+  .hidden-color {
+    display: none;
+  }
+</style>
 
 <div class="excel-container">
+
+  <!--Barre latérale pour les filtres -->
+
   <div class="excel-sidebar">
+
     <h2 style="padding:20px 0px;">✏️ Modifier le graphique</h2>
 
     <form id="excel-upload-form" method="post" enctype="multipart/form-data">
@@ -44,7 +53,9 @@
     </form>
   </div>
 
-  <div class="excel-main">
+<!--Mainpanel pour afficher le graphique de prévisualisation -->
+
+ <div class="excel-main">
     <canvas id="preview-chart"></canvas>
   </div>
 </div>
@@ -110,9 +121,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const type = typeSelect.value;
     const checkboxes = document.querySelectorAll('.serie-checkbox');
     const warning = document.getElementById("pie-warning");
+    /****************************************************************/
+    const colorPickers = document.querySelectorAll('.serie-color');
+    /*****************************************************************/
 
     if (type === "pie") {
       warning.style.display = "block";
+      /*************************************************************/
+      colorPickers.forEach(el => el.classList.add("hidden-color"));
+      /**************************************************************/
       const checked = Array.from(checkboxes).filter(cb => cb.checked);
       if (checked.length > 1) {
         checked.forEach((cb, index) => {
@@ -131,6 +148,9 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     } else {
       warning.style.display = "none";
+      /********************************************************************/
+      colorPickers.forEach(el => el.classList.remove("hidden-color"));
+      /********************************************************************/
       checkboxes.forEach(cb => {
         cb.onclick = () => updatePreview();
       });
