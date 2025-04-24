@@ -30,7 +30,7 @@
   </div>
 
   <!-- 🧱 Zone GridStack -->
-  <div class="grid-stack" style="margin-top: 30px;">
+  <div class="grid-stack">
     {% for graph in graphiques %}
     <div class="grid-stack-item"
          gs-x="{{ graph.pos_x }}"
@@ -40,15 +40,8 @@
          data-graph-id="{{ graph.id }}">
       <div class="grid-stack-item-content">
 
-        <!-- Titre + description -->
-        <h3>{{ graph.titre }} ({{ graph.get_type_display }})</h3>
-        <p>{{ graph.description }}</p>
-
-        <!-- Graphique -->
-        <canvas id="chart{{ graph.id }}"></canvas>
-
-        <!-- Actions -->
-        <div style="margin-top: 10px;">
+        <!-- 🛠️ Actions -->
+        <div class="graph-actions">
           <a href="{% url 'modifier_graphique_excel' graph.id %}" title="Modifier">
             <ion-icon name="create-outline"></ion-icon>
           </a>
@@ -56,6 +49,13 @@
             <ion-icon name="trash-outline"></ion-icon>
           </a>
         </div>
+
+        <!-- 📄 Titre + description -->
+        <h3>{{ graph.titre }} ({{ graph.get_type_display }})</h3>
+        <p>{{ graph.description }}</p>
+
+        <!-- 📊 Graphique -->
+        <canvas id="chart{{ graph.id }}"></canvas>
       </div>
     </div>
     {% empty %}

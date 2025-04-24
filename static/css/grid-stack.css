@@ -1,35 +1,39 @@
-/* Conteneur principal GridStack */
+/* 🧱 Conteneur GridStack */
 .grid-stack {
   margin-top: 30px;
+  row-gap: 20px; /* Espace vertical entre lignes */
 }
 
-/* Élément interne : contient le titre, le canvas, les boutons */
+/* 📦 Bloc interne du graphique */
 .grid-stack-item-content {
   background: white;
   border-radius: 8px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 10px;
   box-sizing: border-box;
-  min-height: 300px; /* Empêche les boîtes trop petites */
+  min-height: 300px;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Canvas Chart.js en responsive */
+/* 📊 Canvas Chart.js */
 .grid-stack-item-content canvas {
   flex: 1;
   width: 100% !important;
-  height: auto !important;
+  height: 100% !important;
   display: block;
 }
 
-/* Zone pour les icônes Modifier / Supprimer */
+/* ✏️🗑️ Icônes Modifier / Supprimer en haut à droite */
 .graph-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
   display: flex;
-  justify-content: flex-end;
   gap: 10px;
-  margin-bottom: 10px;
+  z-index: 2;
 }
 
 .graph-actions a {
@@ -43,21 +47,13 @@
   cursor: pointer;
 }
 
+/* 🔒 Verrouillage : empêche le scroll interne */
 body.locked .grid-stack-item-content {
-  overflow: visible !important;  /* 👈 empêche le scroll interne */
+  overflow: visible !important;
+  max-height: 100% !important;
 }
 
-/* 🔐 Cache les poignées de redimensionnement quand le dashboard est verrouillé */
+/* 🔒 Verrouillage : cache les poignées de redimensionnement */
 body.locked .grid-stack .ui-resizable-handle {
   display: none !important;
-}
-
-/* 🎨 Assure que le canvas remplit bien le bloc, même en resize */
-.grid-stack-item-content canvas {
-  height: 100% !important;  /* ✅ prend toute la hauteur de la box */
-}
-
-/* 💡 Corrige certains scrolls internes résiduels */
-body.locked .grid-stack-item-content {
-  max-height: 100% !important;
 }
