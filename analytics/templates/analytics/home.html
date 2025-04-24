@@ -3,31 +3,34 @@
 {% block title %}Accueil - MonDashboard{% endblock %}
 
 {% block content %}
+
 <link rel="stylesheet" href="{% static 'css/insee.css' %}">
 
-<div class="grid-container">
-    {% for thematique in thematiques %}
-        {% if forloop.counter0|divisibleby:3 %}
-            <div class="grid-row">
-        {% endif %}
-
-        <div class="button-container">
-            <button class="button"
-                    onclick="toggleDropdown('dropdown{{ forloop.counter }}', this)">
-                {{ thematique.nom }}
-                <span class="chevron">&#9660;</span>  {# ▼ #}
-            </button>
-            <div id="dropdown{{ forloop.counter }}" class="dropdown">
-                {% for sous in thematique.sous_thematiques.all %}
-                    <a href="{% url 'dashboard' slug=sous.slug %}">{{ sous.nom }}</a>
-                {% endfor %}
+<div class="container">
+    <div class="grid-container">
+        {% for thematique in thematiques %}
+            {% if forloop.counter0|divisibleby:3 %}
+                <div class="grid-row">
+            {% endif %}
+    
+            <div class="button-container">
+                <button class="button"
+                        onclick="toggleDropdown('dropdown{{ forloop.counter }}', this)">
+                    {{ thematique.nom }}
+                    <span class="chevron">&#9660;</span>  {# ▼ #}
+                </button>
+                <div id="dropdown{{ forloop.counter }}" class="dropdown">
+                    {% for sous in thematique.sous_thematiques.all %}
+                        <a href="{% url 'dashboard' slug=sous.slug %}">{{ sous.nom }}</a>
+                    {% endfor %}
+                </div>
             </div>
-        </div>
-
-        {% if forloop.counter|divisibleby:3 or forloop.last %}
-            </div>
-        {% endif %}
-    {% endfor %}
+    
+            {% if forloop.counter|divisibleby:3 or forloop.last %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
 </div>
 
 <script src="{% static 'js/insee.js' %}"></script>

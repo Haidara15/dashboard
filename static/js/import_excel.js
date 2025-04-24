@@ -169,6 +169,7 @@ document.addEventListener("DOMContentLoaded", function () {
           } : {}
         }
       });
+      
 
       document.getElementById("series-data-json").value = JSON.stringify(
         series.map(s => ({
@@ -211,17 +212,13 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-/************Menu latérale ***********************************************************/
 
-document.addEventListener("DOMContentLoaded", function () {
-  const toggleBtn = document.getElementById("toggle-sidebar");
-  const sidebar = document.getElementById("sidebar");
 
-  toggleBtn.addEventListener("click", function () {
-    sidebar.classList.toggle("collapsed");
-    toggleBtn.textContent = sidebar.classList.contains("collapsed") ? "➡" : "⬅";
-  });
-});
+
+
+
+
+
 
 
   

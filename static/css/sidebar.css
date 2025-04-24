@@ -1,0 +1,94 @@
+/* ===================== */
+/* === GLOBAL RESET ==== */
+/* ===================== */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* Supprime tout scroll global */
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  /* ========================= */
+  /* === LAYOUT PRINCIPAL ==== */
+  /* ========================= */
+  .layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  /* ======================= */
+  /* === SIDEBAR OUVERTE === */
+  /* ======================= */
+  .excel-sidebar {
+    width: 280px;
+    background-color: #f9f9f9;
+    border-right: 1px solid #ddd;
+    padding: 20px;
+    overflow-y: auto;
+    height: 100vh;
+    transition: width 0.3s ease, padding 0.3s ease;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+  
+  /* ========================= */
+  /* === SIDEBAR MASQUÉE ==== */
+  /* ========================= */
+  .excel-sidebar.hidden {
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  /* =========================== */
+  /* === BOUTON TOGGLE FIXE ==== */
+  /* =========================== */
+  .toggle-sidebar-btn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 200;
+    background-color: #ddd;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .toggle-sidebar-btn:hover {
+    background-color: #bbb;
+  }
+  
+  /* ============================ */
+  /* === ZONE GRAPHIQUE MAIN ==== */
+  /* ============================ */
+  .excel-main {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+    height: 100vh;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+  }
+  
+  .excel-main canvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .layout.sidebar-hidden .excel-main {
+    width: 100%;
+  }
+  
+  .layout.sidebar-hidden .excel-sidebar {
+    display: none;
+  }
+  
+  

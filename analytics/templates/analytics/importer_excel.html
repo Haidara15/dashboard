@@ -1,26 +1,18 @@
-{% extends "base.html" %}
 {% load static %}
 {% block content %}
 
-<link rel="stylesheet" href="{% static 'css/creation.css' %}">
+<!-- Feuilles de style -->
+<link rel="stylesheet" href="{% static 'css/formulaire.css' %}">
+<link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
 
-<style>
-  .hidden {
-    display: none;
-  }
-  .hidden-color {
-    display: none;
-  }
-</style>
+<!-- Bouton toggle externe -->
+<button class="toggle-sidebar-btn" id="toggleSidebar" title="Afficher/masquer le menu">☰</button>
 
-<div class="excel-container">
+<!-- Conteneur principal -->
+<div class="layout" id="layout">
 
-  <!--Barre latérale pour les filtres -->
-
+  <!-- Sidebar -->
   <div class="excel-sidebar" id="sidebar">
-
-    <button id="toggle-sidebar" class="toggle-btn">⬅</button>
-
     <h2>📂 Importer Excel</h2>
 
     <form id="excel-upload-form" method="post" enctype="multipart/form-data">
@@ -58,16 +50,16 @@
     </form>
   </div>
 
-<!--Mainpanel pour afficher le graphique de prévisualisation -->
-
-<div class="excel-main">
+  <!-- Zone principale -->
+  <div class="excel-main">
     <canvas id="preview-chart"></canvas>
   </div>
-  
+
 </div>
 
+<!-- Scripts -->
+<script src="{% static 'js/sidebar.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script src="{% static 'js/creation.js' %}"></script>
+<script src="{% static 'js/import_excel.js' %}"></script>
 
 {% endblock %}
