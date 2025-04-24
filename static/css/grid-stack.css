@@ -42,3 +42,22 @@
   color: #007bff;
   cursor: pointer;
 }
+
+body.locked .grid-stack-item-content {
+  overflow: visible !important;  /* 👈 empêche le scroll interne */
+}
+
+/* 🔐 Cache les poignées de redimensionnement quand le dashboard est verrouillé */
+body.locked .grid-stack .ui-resizable-handle {
+  display: none !important;
+}
+
+/* 🎨 Assure que le canvas remplit bien le bloc, même en resize */
+.grid-stack-item-content canvas {
+  height: 100% !important;  /* ✅ prend toute la hauteur de la box */
+}
+
+/* 💡 Corrige certains scrolls internes résiduels */
+body.locked .grid-stack-item-content {
+  max-height: 100% !important;
+}

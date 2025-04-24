@@ -21,10 +21,12 @@
   <h2>{{ sous_thematique.nom }}</h2>
   <p><strong>Thématique :</strong> {{ sous_thematique.thematique.nom }}</p>
 
-  <div style="margin-top: 20px;">
+  <div style="margin-top: 20px; display: flex; align-items: center; gap: 10px;">
     <a href="{% url 'importer_excel' slug=sous_thematique.slug %}" class="btn btn-secondary">
       📂 Importer depuis Excel
     </a>
+    <!-- 🔐 Bouton de verrouillage -->
+    <button id="toggle-lock" class="btn btn-warning">🔒 Verrouiller</button>
   </div>
 
   <!-- 🧱 Zone GridStack -->
@@ -62,7 +64,7 @@
   </div>
 </div>
 
-<!-- 🗑️ Modal de suppression -->
+<!-- 🚑 Modal de suppression -->
 <div id="delete-modal" class="modal">
   <div class="modal-content">
     <span class="close" onclick="closeDeleteModal()">×</span>
@@ -76,13 +78,11 @@
   </div>
 </div>
 
-<!-- 📦 JS GridStack -->
+<!-- 🚚 GridStack Core -->
 <script src="https://cdn.jsdelivr.net/npm/gridstack@8.2.1/dist/gridstack-all.js"></script>
-
-<!-- 📜 Modal suppression -->
 <script src="{% static 'js/modal_delete_chart.js' %}"></script>
 
-<!-- ✅ Script final pour créer tous les graphiques -->
+<!-- 🌟 Chart init + toggle logic -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const charts = {};
@@ -92,7 +92,6 @@
       const id = "chart{{ graph.id }}";
       const canvas = document.getElementById(id);
       if (!canvas) return;
-
       const ctx = canvas.getContext("2d");
       if (charts[id]) charts[id].destroy();
 
@@ -123,20 +122,27 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { position: "bottom" }
-          }
+          plugins: { legend: { position: "bottom" } }
         }
       });
     })();
     {% endfor %}
 
-    // 🧱 Initialisation GridStack
-    GridStack.init({
+    const grid = GridStack.init({
       cellHeight: 100,
       margin: 10,
       resizable: { handles: 'all' },
       draggable: { handle: '.grid-stack-item-content' }
+    });
+
+    // 🔒 Toggle Lock Mode
+    const toggleBtn = document.getElementById("toggle-lock");
+    toggleBtn.addEventListener("click", () => {
+      document.body.classList.toggle("locked");
+      const isLocked = document.body.classList.contains("locked");
+      grid.enableMove(!isLocked);
+      grid.enableResize(!isLocked);
+      toggleBtn.textContent = isLocked ? "🔓 Déverrouiller" : "🔒 Verrouiller";
     });
   });
 </script>
