@@ -311,6 +311,35 @@ def modifier_graphique_excel(request, graph_id):
 
 
 
+###### Vue pour sauvegarder les positions  #####
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from .models import Graphique
+import json
+
+@csrf_exempt 
+@require_POST
+def update_positions(request):
+    try:
+        data = json.loads(request.body)
+        for item in data.get("items", []):
+            try:
+                graph = Graphique.objects.get(id=item["id"])
+                graph.pos_x = item["x"]
+                graph.pos_y = item["y"]
+                graph.width = item["w"]
+                graph.height = item["h"]
+                graph.save()
+            except Graphique.DoesNotExist:
+                continue
+        return JsonResponse({"status": "success"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+
+
 
 
 

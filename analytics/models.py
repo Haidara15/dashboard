@@ -46,9 +46,15 @@ class Graphique(models.Model):
     date_ajout = models.DateTimeField(auto_now_add=True)
     colonne_categorie = models.CharField(max_length=255, blank=True, null=True)
     fichier_excel = models.FileField(upload_to="excels/", null=True, blank=True)
+    ## Drag & DROP #######
+    pos_x = models.IntegerField(default=0)
+    pos_y = models.IntegerField(default=0)
+    width = models.IntegerField(default=6)
+    height = models.IntegerField(default=4)
 
     def __str__(self):
         return self.titre
+
 
 class SerieDonnee(models.Model):
     graphique = models.ForeignKey(Graphique, on_delete=models.CASCADE, related_name="series")

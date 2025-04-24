@@ -3,94 +3,142 @@
 {% block title %}{{ sous_thematique.nom }} - Dashboard{% endblock %}
 
 {% block content %}
+
+<!-- 🌐 CSS -->
 <link rel="stylesheet" href="{% static 'css/insee.css' %}">
 <link rel="stylesheet" href="{% static 'css/modal_delete_chart.css' %}">
+<link rel="stylesheet" href="{% static 'css/grid-stack.css' %}">
+<link href="https://cdn.jsdelivr.net/npm/gridstack@8.2.1/dist/gridstack.min.css" rel="stylesheet" />
 
-<!-- Chargement de Chart.js (si pas déjà dans base.html) -->
+<!-- 📦 Ionicons -->
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+<!-- 📊 Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="container">
-    <h2>{{ sous_thematique.nom }}</h2>
-    <p><strong>Thématique :</strong> {{ sous_thematique.thematique.nom }}</p>
+  <h2>{{ sous_thematique.nom }}</h2>
+  <p><strong>Thématique :</strong> {{ sous_thematique.thematique.nom }}</p>
 
-    <!-- ✅ Boutons action -->
-    <div style="margin-top: 20px;">
-        <a href="{% url 'importer_excel' slug=sous_thematique.slug %}" class="btn btn-secondary">
-          📂 Importer depuis Excel
-        </a>
-    </div>
+  <div style="margin-top: 20px;">
+    <a href="{% url 'importer_excel' slug=sous_thematique.slug %}" class="btn btn-secondary">
+      📂 Importer depuis Excel
+    </a>
+  </div>
 
-    <!-- Graphiques existants -->
-    <div class="graph-placeholder">
-        {% for graph in graphiques %}
-        <div class="graph-block" style="margin-top: 40px;">
-            <h3>{{ graph.titre }} ({{ graph.get_type_display }})</h3>
-            <p>{{ graph.description }}</p>
-            <canvas id="chart{{ graph.id }}"></canvas>
+  <!-- 🧱 Zone GridStack -->
+  <div class="grid-stack" style="margin-top: 30px;">
+    {% for graph in graphiques %}
+    <div class="grid-stack-item"
+         gs-x="{{ graph.pos_x }}"
+         gs-y="{{ graph.pos_y }}"
+         gs-w="{{ graph.width }}"
+         gs-h="{{ graph.height }}"
+         data-graph-id="{{ graph.id }}">
+      <div class="grid-stack-item-content">
 
-            <div style="margin-top: 10px;">
-                <a href="{% url 'modifier_graphique_excel' graph.id %}">✏️ Modifier</a>|
-                <a href="#" onclick="openDeleteModal({{ graph.id }}, '{{ graph.titre }}')">🗑️ Supprimer</a>
-            </div>
+        <!-- Titre + description -->
+        <h3>{{ graph.titre }} ({{ graph.get_type_display }})</h3>
+        <p>{{ graph.description }}</p>
 
-            <script>
-                const ctx{{ graph.id }} = document.getElementById('chart{{ graph.id }}').getContext('2d');
+        <!-- Graphique -->
+        <canvas id="chart{{ graph.id }}"></canvas>
 
-                const chart{{ graph.id }} = new Chart(ctx{{ graph.id }}, {
-                    type: '{{ graph.type }}',
-                    data: {
-                        {% if graph.series.all|length > 0 %}
-                        labels: {{ graph.series.all.0.categories|safe }},
-                        {% else %}
-                        labels: [],
-                        {% endif %}
-                        datasets: [
-                            {% for serie in graph.series.all %}
-                            {
-                                label: "{{ serie.nom }}",
-                                data: {{ serie.valeurs|safe }},
-                                backgroundColor: {% if graph.type == "pie" %}
-                                    {{ serie.couleurs_camembert|default:'[]'|safe }}
-                                {% else %}
-                                    "{{ serie.couleur|default:'#3e95cd' }}"
-                                {% endif %},
-                                borderColor: {% if graph.type == "pie" %} [] {% else %} "#333" {% endif %},
-                                borderWidth: 1
-                            },
-                            {% endfor %}
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: {
-                                position: 'bottom'
-                            }
-                        }
-                    }
-                });
-            </script>
+        <!-- Actions -->
+        <div style="margin-top: 10px;">
+          <a href="{% url 'modifier_graphique_excel' graph.id %}" title="Modifier">
+            <ion-icon name="create-outline"></ion-icon>
+          </a>
+          <a href="#" onclick="openDeleteModal({{ graph.id }}, '{{ graph.titre }}')" title="Supprimer">
+            <ion-icon name="trash-outline"></ion-icon>
+          </a>
         </div>
-        {% empty %}
-        <p style="margin-top: 30px;">Aucun graphique pour cette sous-thématique.</p>
-        {% endfor %}
+      </div>
     </div>
+    {% empty %}
+    <p style="margin-top: 30px;">Aucun graphique pour cette sous-thématique.</p>
+    {% endfor %}
+  </div>
 </div>
 
-<!-- 🔥 Modal de suppression -->
+<!-- 🗑️ Modal de suppression -->
 <div id="delete-modal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeDeleteModal()">×</span>
-        <h3>🗑️ Supprimer le graphique</h3>
-        <p id="modal-text"></p>
-        <form id="delete-form" method="post">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">✅ Oui, supprimer</button>
-            <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">❌ Annuler</button>
-        </form>
-    </div>
+  <div class="modal-content">
+    <span class="close" onclick="closeDeleteModal()">×</span>
+    <h3>🗑️ Supprimer le graphique</h3>
+    <p id="modal-text"></p>
+    <form id="delete-form" method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">✅ Oui, supprimer</button>
+      <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">❌ Annuler</button>
+    </form>
+  </div>
 </div>
 
+<!-- 📦 JS GridStack -->
+<script src="https://cdn.jsdelivr.net/npm/gridstack@8.2.1/dist/gridstack-all.js"></script>
+
+<!-- 📜 Modal suppression -->
 <script src="{% static 'js/modal_delete_chart.js' %}"></script>
+
+<!-- ✅ Script final pour créer tous les graphiques -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const charts = {};
+
+    {% for graph in graphiques %}
+    (function () {
+      const id = "chart{{ graph.id }}";
+      const canvas = document.getElementById(id);
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (charts[id]) charts[id].destroy();
+
+      charts[id] = new Chart(ctx, {
+        type: '{{ graph.type }}',
+        data: {
+          {% if graph.series.all|length > 0 %}
+          labels: {{ graph.series.all.0.categories|safe }},
+          {% else %}
+          labels: [],
+          {% endif %}
+          datasets: [
+            {% for serie in graph.series.all %}
+            {
+              label: "{{ serie.nom }}",
+              data: {{ serie.valeurs|safe }},
+              backgroundColor: {% if graph.type == "pie" %}
+                {{ serie.couleurs_camembert|default:'[]'|safe }}
+              {% else %}
+                "{{ serie.couleur|default:'#3e95cd' }}"
+              {% endif %},
+              borderColor: {% if graph.type == "pie" %} [] {% else %} "#333" {% endif %},
+              borderWidth: 1
+            },
+            {% endfor %}
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom" }
+          }
+        }
+      });
+    })();
+    {% endfor %}
+
+    // 🧱 Initialisation GridStack
+    GridStack.init({
+      cellHeight: 100,
+      margin: 10,
+      resizable: { handles: 'all' },
+      draggable: { handle: '.grid-stack-item-content' }
+    });
+  });
+</script>
 
 {% endblock %}

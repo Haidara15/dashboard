@@ -1,0 +1,44 @@
+/* Conteneur principal GridStack */
+.grid-stack {
+  margin-top: 30px;
+}
+
+/* Élément interne : contient le titre, le canvas, les boutons */
+.grid-stack-item-content {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  min-height: 300px; /* Empêche les boîtes trop petites */
+}
+
+/* Canvas Chart.js en responsive */
+.grid-stack-item-content canvas {
+  flex: 1;
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+}
+
+/* Zone pour les icônes Modifier / Supprimer */
+.graph-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.graph-actions a {
+  color: #333;
+  font-size: 1.2rem;
+  transition: color 0.2s;
+}
+
+.graph-actions a:hover {
+  color: #007bff;
+  cursor: pointer;
+}

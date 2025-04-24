@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
 
-from .views import home, dashboard,supprimer_graphique,importer_excel,creer_graphique_excel,generer_graphique_preview,modifier_graphique_excel
+from .views import home, dashboard,supprimer_graphique,importer_excel,creer_graphique_excel,generer_graphique_preview,modifier_graphique_excel,update_positions
 
 urlpatterns = [
     path('', home, name="home"),
@@ -11,6 +11,7 @@ urlpatterns = [
     path('creer-graphique-excel/<slug:slug>/', creer_graphique_excel, name='creer_graphique_excel'),
     path('api/generer-graphique-preview/', generer_graphique_preview, name='generer_graphique_preview'),
     path('modifier-graphique-excel/<int:graph_id>/', modifier_graphique_excel, name='modifier_graphique_excel'),
+    path('api/update_positions/', update_positions, name='update_positions'),
 
 ]
 
