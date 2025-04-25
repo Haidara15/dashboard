@@ -140,14 +140,6 @@ def generer_graphique_preview(request):
 
 
 
-from io import StringIO
-import json
-import pandas as pd
-from .models import Graphique, SerieDonnee, SousThematique
-
-from django.shortcuts import get_object_or_404, redirect
-import json
-from .models import Graphique, SerieDonnee, SousThematique
 
 
 import json
