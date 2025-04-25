@@ -39,6 +39,7 @@ class Graphique(models.Model):
         ('bar', 'Colonnes'),
         ('line', 'Lignes'),
         ('pie', 'Camembert'),
+        ('doughnut','Doughnut')
     ])
     description = models.TextField(blank=True, null=True)
     titre_abscisse = models.CharField(max_length=100, blank=True, null=True)
@@ -46,7 +47,7 @@ class Graphique(models.Model):
     date_ajout = models.DateTimeField(auto_now_add=True)
     colonne_categorie = models.CharField(max_length=255, blank=True, null=True)
     fichier_excel = models.FileField(upload_to="excels/", null=True, blank=True)
-    ## Drag & DROP #######
+    ## DRAG & DROP #######
     pos_x = models.IntegerField(default=0)
     pos_y = models.IntegerField(default=0)
     width = models.IntegerField(default=6)

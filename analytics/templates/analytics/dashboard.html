@@ -51,7 +51,7 @@
         </div>
 
         <!-- 📄 Titre + description -->
-        <h3>{{ graph.titre }} </h3>
+        <h3>{{ graph.titre }} ({{ graph.get_type_display }})</h3>
         <p>{{ graph.description }}</p>
 
         <!-- 📊 Graphique -->
@@ -83,7 +83,10 @@
 <script src="https://cdn.jsdelivr.net/npm/gridstack@8.2.1/dist/gridstack-all.js"></script>
 <script src="{% static 'js/modal_delete_chart.js' %}"></script>
 
+
+
 <!-- 🌟 Chart init + toggle logic -->
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const charts = {};
@@ -109,12 +112,11 @@
             {
               label: "{{ serie.nom }}",
               data: {{ serie.valeurs|safe }},
-              backgroundColor: {% if graph.type == "pie" %}
+              backgroundColor: {% if graph.type == "pie" or graph.type == "doughnut" %}
                 {{ serie.couleurs_camembert|default:'[]'|safe }}
               {% else %}
                 "{{ serie.couleur|default:'#3e95cd' }}"
               {% endif %},
-              
               borderWidth: 1
             },
             {% endfor %}
@@ -147,5 +149,7 @@
     });
   });
 </script>
+
+
 
 {% endblock %}

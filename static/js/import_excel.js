@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       <h4>Colonnes des séries :</h4>
       <p id="pie-warning" style="display:none; color: #888; font-style: italic;">
-        Pour un camembert, une seule série est autorisée.
+        Pour un camembert ou un doughnut, une seule série est autorisée.
       </p>
       ${excelColumns.map((col, index) => {
         const defaultColor = `hsl(${(index * 60) % 360}, 70%, 60%)`;
@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const warning = document.getElementById("pie-warning");
     const colorPickers = document.querySelectorAll('.serie-color');
 
-    if (type === "pie") {
+    if (type === "pie" || type === "doughnut") {
       warning.style.display = "block";
       colorPickers.forEach(el => el.classList.add("hidden-color"));
       const checked = Array.from(checkboxes).filter(cb => cb.checked);
@@ -107,7 +107,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  
   function genererPreview() {
     const chartType = document.getElementById("id_type").value;
 
@@ -137,7 +136,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (window.previewChart) window.previewChart.destroy();
 
       let series = data.series_data || [];
-      if (chartType === "pie" && series.length > 1) {
+      if ((chartType === "pie" || chartType === "doughnut") && series.length > 1) {
         series = [series[0]];
       }
 
@@ -148,12 +147,10 @@ document.addEventListener("DOMContentLoaded", function () {
           datasets: series.map(serie => ({
             label: serie.nom,
             data: serie.valeurs,
-
-            backgroundColor: chartType === "pie"
-            ? data.labels.map((_, i) => `hsl(${(i * 360 / data.labels.length)}, 70%, 60%)`)
-            : serie.couleur,
-
-            borderColor: chartType === "pie" ? [] : "#333",
+            backgroundColor: (chartType === "pie" || chartType === "doughnut")
+              ? data.labels.map((_, i) => `hsl(${(i * 360 / data.labels.length)}, 70%, 60%)`)
+              : serie.couleur,
+            borderColor: (chartType === "pie" || chartType === "doughnut") ? [] : "#333",
             borderWidth: 1
           }))
         },
@@ -163,18 +160,17 @@ document.addEventListener("DOMContentLoaded", function () {
             legend: { position: "bottom" },
             title: { display: true, text: document.getElementById("id_titre").value || "Aperçu" }
           },
-          scales: chartType !== "pie" ? {
+          scales: (chartType !== "pie" && chartType !== "doughnut") ? {
             x: { title: { display: true, text: document.getElementById("titre-x").value } },
             y: { title: { display: true, text: document.getElementById("titre-y").value } }
           } : {}
         }
       });
-      
 
       document.getElementById("series-data-json").value = JSON.stringify(
         series.map(s => ({
           ...s,
-          couleurs_camembert: chartType === "pie"
+          couleurs_camembert: (chartType === "pie" || chartType === "doughnut")
             ? data.labels.map((_, i) => `hsl(${(i * 360 / data.labels.length)}, 70%, 60%)`)
             : undefined
         }))
@@ -210,15 +206,3 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("titre-x").addEventListener("input", updateSelection);
   document.getElementById("titre-y").addEventListener("input", updateSelection);
 });
-
-
-
-
-
-
-
-
-
-
-
-  
