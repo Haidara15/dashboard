@@ -32,6 +32,8 @@ class SousThematique(models.Model):
         super().save(*args, **kwargs)
 
 
+# models.py
+
 class Graphique(models.Model):
     sous_thematique = models.ForeignKey("SousThematique", on_delete=models.CASCADE, related_name="graphiques")
     titre = models.CharField(max_length=200)
@@ -47,11 +49,15 @@ class Graphique(models.Model):
     date_ajout = models.DateTimeField(auto_now_add=True)
     colonne_categorie = models.CharField(max_length=255, blank=True, null=True)
     fichier_excel = models.FileField(upload_to="excels/", null=True, blank=True)
-    ## DRAG & DROP #######
+
+    ## DRAG & DROP
     pos_x = models.IntegerField(default=0)
     pos_y = models.IntegerField(default=0)
     width = models.IntegerField(default=6)
     height = models.IntegerField(default=4)
+
+    ## 🎯 Nouveau champ
+    afficher_legende = models.BooleanField(default=True)
 
     def __str__(self):
         return self.titre
@@ -65,7 +71,18 @@ class SerieDonnee(models.Model):
     couleur = models.CharField(max_length=7, default="#3e95cd")  # pour bar/line
     couleurs_camembert = models.JSONField(null=True, blank=True)  # 🎯 pour pie
 
+    ## 🎯 Nouveaux champs
+    y_axis = models.CharField(
+        max_length=5,
+        choices=[('left', 'Axe Gauche'), ('right', 'Axe Droit')],
+        default='left'
+    )
+    afficher_labels = models.BooleanField(default=True)
+    ajouter_pourcentage = models.BooleanField(default=False)
+
     def __str__(self):
         return f"{self.nom} ({self.graphique.titre})"
+
+
 
 

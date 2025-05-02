@@ -4,6 +4,9 @@ document.addEventListener("DOMContentLoaded", function () {
   let selectedY = [];
   let excelRows = [];
 
+  // ===============================
+  // 🧩 Upload du fichier Excel
+  // ===============================
   document.getElementById('excel-file').addEventListener('change', function () {
     const form = document.getElementById('excel-upload-form');
     const formData = new FormData(form);
@@ -29,6 +32,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
+  // ===============================
+  // 🧩 Affichage dynamique des colonnes Excel
+  // ===============================
   function renderColumnCheckboxes() {
     const container = document.getElementById("colonnes-container");
     container.innerHTML = `
@@ -56,7 +62,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll('input[name="categorie"]').forEach(radio => {
       radio.addEventListener('change', updateSelection);
     });
-
     document.querySelectorAll('.serie-color').forEach(input => {
       input.addEventListener("input", updateSelection);
     });
@@ -65,6 +70,9 @@ document.addEventListener("DOMContentLoaded", function () {
     updateSelection();
   }
 
+  // ===============================
+  // 🧩 Comportement spécifique Pie/Doughnut
+  // ===============================
   function applyPieBehavior() {
     const type = document.getElementById("id_type").value;
     const checkboxes = document.querySelectorAll('.serie-checkbox');
@@ -99,14 +107,56 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // ===============================
+  // 🧩 Mettre à jour la sélection
+  // ===============================
   function updateSelection() {
     selectedX = document.querySelector('input[name="categorie"]:checked')?.value;
     selectedY = Array.from(document.querySelectorAll('.serie-checkbox:checked')).map(cb => cb.value);
+
+    const toggleSecondAxisContainer = document.getElementById('toggle-second-axis-container');
+    if (toggleSecondAxisContainer) {
+      if (selectedY.length > 1) {
+        toggleSecondAxisContainer.style.display = "block";
+      } else {
+        toggleSecondAxisContainer.style.display = "none";
+        document.getElementById("toggle-second-axis").checked = false;
+      }
+    }
+
+    // 🎯 Mise à jour dynamique des options par série
+    renderSeriesOptions();
+
     if (selectedX && selectedY.length > 0) {
       genererPreview();
     }
   }
 
+  // ===============================
+  // 🧩 Générer les options par série (Axe Gauche/Droite)
+  // ===============================
+  function renderSeriesOptions() {
+    const container = document.getElementById('series-options-container');
+    container.innerHTML = '';
+
+    selectedY.forEach(serie => {
+      const div = document.createElement('div');
+      div.style.marginBottom = "5px";
+      div.innerHTML = `
+        <label><strong>${serie}</strong> - Axe :
+          <select class="axis-choice" data-serie="${serie}">
+            <option value="y">Gauche</option>
+            <option value="y1">Droite</option>
+          </select>
+        </label>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  // ===============================
+  // 🎯 Générer l'aperçu Chart.js
+  // ===============================
   function genererPreview() {
     const chartType = document.getElementById("id_type").value;
 
@@ -140,6 +190,18 @@ document.addEventListener("DOMContentLoaded", function () {
         series = [series[0]];
       }
 
+      const showLegend = document.getElementById("toggle-legend")?.checked ?? true;
+      const showLabels = document.getElementById("toggle-labels")?.checked ?? true;
+      const showPercent = document.getElementById("toggle-percent")?.checked ?? false;
+
+      // 📋 Lecture des choix Axe Gauche/Droite
+      const axisChoices = {};
+      document.querySelectorAll('.axis-choice').forEach(select => {
+        const serie = select.getAttribute('data-serie');
+        const axis = select.value;
+        axisChoices[serie] = axis;
+      });
+
       window.previewChart = new Chart(document.getElementById("preview-chart"), {
         type: chartType,
         data: {
@@ -151,20 +213,32 @@ document.addEventListener("DOMContentLoaded", function () {
               ? data.labels.map((_, i) => `hsl(${(i * 360 / data.labels.length)}, 70%, 60%)`)
               : serie.couleur,
             borderColor: (chartType === "pie" || chartType === "doughnut") ? [] : "#333",
-            borderWidth: 1
+            borderWidth: 1,
+            yAxisID: axisChoices[serie.nom] || 'y'
           }))
         },
         options: {
           responsive: true,
           plugins: {
-            legend: { position: "bottom" },
-            title: { display: true, text: document.getElementById("id_titre").value || "Aperçu" }
+            legend: { display: showLegend, position: "bottom" },
+            title: { display: true, text: document.getElementById("id_titre").value || "Aperçu" },
+            datalabels: {
+              display: showLabels,
+              formatter: function(value, context) {
+                return showPercent ? value + '%' : value;
+              },
+              anchor: 'end',
+              align: (chartType === "pie" || chartType === "doughnut") ? 'center' : 'top',
+              color: (chartType === "pie" || chartType === "doughnut") ? '#fff' : '#000'
+            }
           },
           scales: (chartType !== "pie" && chartType !== "doughnut") ? {
             x: { title: { display: true, text: document.getElementById("titre-x").value } },
-            y: { title: { display: true, text: document.getElementById("titre-y").value } }
+            y: { title: { display: true, text: document.getElementById("titre-y").value }, beginAtZero: true },
+            y1: { title: { display: true, text: 'Axe secondaire' }, position: 'right', grid: { drawOnChartArea: false } }
           } : {}
-        }
+        },
+        plugins: [ChartDataLabels]
       });
 
       document.getElementById("series-data-json").value = JSON.stringify(
@@ -175,10 +249,12 @@ document.addEventListener("DOMContentLoaded", function () {
             : undefined
         }))
       );
-
     });
   }
 
+  // ===============================
+  // 📤 Validation formulaire
+  // ===============================
   const formulaire = document.querySelector('form[action*="creer_graphique_excel"]');
   if (formulaire) {
     formulaire.addEventListener("submit", function (e) {
@@ -197,12 +273,17 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // 🧩 Mettre à jour preview si changement
   document.getElementById("id_type").addEventListener("change", () => {
     applyPieBehavior();
     updateSelection();
   });
-
   document.getElementById("id_titre").addEventListener("input", updateSelection);
   document.getElementById("titre-x").addEventListener("input", updateSelection);
   document.getElementById("titre-y").addEventListener("input", updateSelection);
+
+  ["toggle-legend", "toggle-labels", "toggle-percent", "toggle-second-axis"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", updateSelection);
+  });
 });

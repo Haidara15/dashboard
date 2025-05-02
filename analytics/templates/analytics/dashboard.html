@@ -16,6 +16,8 @@
 
 <!-- 📊 Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
 
 <div class="container">
   <h2>{{ sous_thematique.nom }}</h2>
@@ -88,68 +90,89 @@
 <!-- 🌟 Chart init + toggle logic -->
 
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const charts = {};
-
-    {% for graph in graphiques %}
-    (function () {
-      const id = "chart{{ graph.id }}";
-      const canvas = document.getElementById(id);
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (charts[id]) charts[id].destroy();
-
-      charts[id] = new Chart(ctx, {
-        type: '{{ graph.type }}',
-        data: {
-          {% if graph.series.all|length > 0 %}
-          labels: {{ graph.series.all.0.categories|safe }},
-          {% else %}
-          labels: [],
-          {% endif %}
-          datasets: [
-            {% for serie in graph.series.all %}
-            {
-              label: "{{ serie.nom }}",
-              data: {{ serie.valeurs|safe }},
-              backgroundColor: {% if graph.type == "pie" or graph.type == "doughnut" %}
-                {{ serie.couleurs_camembert|default:'[]'|safe }}
-              {% else %}
-                "{{ serie.couleur|default:'#3e95cd' }}"
-              {% endif %},
-              borderWidth: 1
+    document.addEventListener("DOMContentLoaded", function () {
+      const charts = {};
+  
+      {% for graph in graphiques %}
+      (function () {
+        const id = "chart{{ graph.id }}";
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (charts[id]) charts[id].destroy();
+  
+        charts[id] = new Chart(ctx, {
+          type: '{{ graph.type }}',
+          data: {
+            {% if graph.series.all|length > 0 %}
+            labels: {{ graph.series.all.0.categories|safe }},
+            {% else %}
+            labels: [],
+            {% endif %}
+            datasets: [
+              {% for serie in graph.series.all %}
+              {
+                label: "{{ serie.nom }}",
+                data: {{ serie.valeurs|safe }},
+                backgroundColor: {% if graph.type == "pie" or graph.type == "doughnut" %}
+                  {{ serie.couleurs_camembert|default:'[]'|safe }}
+                {% else %}
+                  "{{ serie.couleur|default:'#3e95cd' }}"
+                {% endif %},
+                borderWidth: 1
+              },
+              {% endfor %}
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom" },
+              datalabels: {
+                display: {{ graph.afficher_labels|default:"true"|lower }},
+                color: '#fff', 
+                formatter: function(value, context) {
+                  {% if graph.type == "pie" or graph.type == "doughnut" %}
+                  // Afficher un pourcentage dans les parts
+                  let total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                  let percentage = Math.round((value / total) * 100);
+                  return percentage + '%';
+                  {% else %}
+                  // Sinon afficher la valeur normale
+                  return value;
+                  {% endif %}
+                }
+              }
             },
-            {% endfor %}
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: "bottom" } }
-        }
+            scales: (('{{ graph.type }}' !== 'pie' && '{{ graph.type }}' !== 'doughnut')) ? {
+              x: { title: { display: true, text: '{{ graph.titre_abscisse|default:"" }}' } },
+              y: { title: { display: true, text: '{{ graph.titre_ordonnée|default:"" }}' }, beginAtZero: true }
+            } : {}
+          },
+          plugins: [ChartDataLabels]
+        });
+      })();
+      {% endfor %}
+  
+      const grid = GridStack.init({
+        cellHeight: 100,
+        margin: 10,
+        resizable: { handles: 'all' },
+        draggable: { handle: '.grid-stack-item-content' }
       });
-    })();
-    {% endfor %}
-
-    const grid = GridStack.init({
-      cellHeight: 100,
-      margin: 10,
-      resizable: { handles: 'all' },
-      draggable: { handle: '.grid-stack-item-content' }
+  
+      // 🔒 Toggle Lock Mode
+      const toggleBtn = document.getElementById("toggle-lock");
+      toggleBtn.addEventListener("click", () => {
+        document.body.classList.toggle("locked");
+        const isLocked = document.body.classList.contains("locked");
+        grid.enableMove(!isLocked);
+        grid.enableResize(!isLocked);
+        toggleBtn.textContent = isLocked ? "🔓 Déverrouiller" : "🔒 Verrouiller";
+      });
     });
-
-    // 🔒 Toggle Lock Mode
-    const toggleBtn = document.getElementById("toggle-lock");
-    toggleBtn.addEventListener("click", () => {
-      document.body.classList.toggle("locked");
-      const isLocked = document.body.classList.contains("locked");
-      grid.enableMove(!isLocked);
-      grid.enableResize(!isLocked);
-      toggleBtn.textContent = isLocked ? "🔓 Déverrouiller" : "🔒 Verrouiller";
-    });
-  });
-</script>
-
-
+  </script>
+  
 
 {% endblock %}

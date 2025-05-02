@@ -1,30 +1,36 @@
 {% load static %}
 {% block content %}
 
-<!-- Feuilles de style -->
+<!-- 🌐 Feuilles de style -->
 <link rel="stylesheet" href="{% static 'css/formulaire.css' %}">
 <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
 
-<!-- Bouton toggle externe -->
+<!-- 🔘 Bouton toggle sidebar -->
 <button class="toggle-sidebar-btn" id="toggleSidebar" title="Afficher/masquer le menu">☰</button>
 
-<!-- Conteneur principal -->
+<!-- 🧱 Conteneur principal -->
 <div class="layout" id="layout">
 
-  <!-- Sidebar -->
+  <!-- ==================== -->
+  <!-- 📂 Sidebar à gauche : Import Excel et Formulaire Graphique -->
+  <!-- ==================== -->
   <div class="excel-sidebar" id="sidebar">
     <h2>📂 Importer Excel</h2>
 
+    <!-- Formulaire d'upload Excel -->
     <form id="excel-upload-form" method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <input type="file" name="excel_file" id="excel-file" accept=".xlsx" required>
     </form>
 
+    <!-- Formulaire pour enregistrer le graphique -->
     <form method="post" action="{% url 'creer_graphique_excel' slug=slug %}">
       {% csrf_token %}
 
+      <!-- Colonnes Excel détectées -->
       <div id="colonnes-container" class="hidden"></div>
 
+      <!-- Champs principaux -->
       <label for="id_titre">Titre :</label>
       <input type="text" name="titre" id="id_titre" required>
 
@@ -45,22 +51,64 @@
       <label for="titre-y">Titre axe Y :</label>
       <input type="text" name="titre-y" id="titre-y">
 
+      <!-- Stockage JSON des séries -->
       <input type="hidden" name="series_data" id="series-data-json">
 
+      <!-- Bouton de sauvegarde -->
       <button type="submit" class="submit-btn">✅ Enregistrer le graphique</button>
     </form>
   </div>
 
-  <!-- Zone principale -->
+  <!-- ==================== -->
+  <!-- 📊 Zone de prévisualisation à droite -->
+  <!-- ==================== -->
   <div class="excel-main">
-    <canvas id="preview-chart"></canvas>
+
+    <!-- 🌟 Bloc d'options supplémentaires -->
+<div id="preview-options" style="margin-bottom: 20px;">
+  <h4>Options d'affichage :</h4>
+
+  <label>
+    <input type="checkbox" id="toggle-legend" checked> Afficher la légende
+  </label><br>
+
+  <label>
+    <input type="checkbox" id="toggle-labels" checked> Afficher les labels
+  </label><br>
+
+  <label>
+    <input type="checkbox" id="toggle-percent"> Ajouter % aux valeurs
+  </label><br>
+
+  <!-- 🎯 Option pour afficher/ajouter un axe secondaire -->
+  <div id="toggle-second-axis-container" style="display: none; margin-top: 10px;">
+    <label>
+      <input type="checkbox" id="toggle-second-axis"> Ajouter un axe secondaire (droite)
+    </label>
+  </div>
+
+  <!-- 🎯 Options par série générées dynamiquement -->
+  <h4 style="margin-top: 20px;">Options par série :</h4>
+  <div id="series-options-container">
+    <!-- Les choix par série (Axe gauche/droite) seront injectés ici en JS -->
   </div>
 
 </div>
 
-<!-- Scripts -->
+<!-- 🎯 Canvas de prévisualisation du graphique -->
+<canvas id="preview-chart"></canvas>
+
+
+  </div>
+
+</div>
+
+<!-- ==================== -->
+<!-- 🔥 Scripts utilisés -->
+<!-- ==================== -->
 <script src="{% static 'js/sidebar.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 <script src="{% static 'js/import_excel.js' %}"></script>
 
 {% endblock %}
